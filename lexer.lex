@@ -11,6 +11,10 @@ int c;
 %%
 
 " " ;
+"\r\n";
+"\t";
+"\r";
+"\n";
 "+" { yylval.token = OP_PLUS; return OP_PLUS; }
 "*" { yylval.token = OP_MULTIPLY; return OP_MULTIPLY; }
 "-" { yylval.token = OP_MINUS; return OP_MINUS; }

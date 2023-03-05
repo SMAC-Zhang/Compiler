@@ -39,17 +39,19 @@ extern int  yywrap();
 
 STM:  IDENTIFIER ASSIGN EXPR
       {
+          root_stm = A_AssignStm($1, $3);
           $$ = A_AssignStm($1, $3);
       }
       |
       PRINT '(' EXPLIST ')'
       {
+          root_stm = A_PrintStm($3);
           $$ = A_PrintStm($3);
       }
       |
       STM ';'
       {
-        
+
       }
       |
       STM ';' STM
@@ -81,55 +83,46 @@ EXPR: NUMBER
       |
       '(' EXPR OP_PLUS EXPR ')' 
       {
-          root = A_OpExp($2, A_plus, $4);
           $$ = A_OpExp($2, A_plus, $4);
       } 
       |
       EXPR OP_PLUS EXPR
       {
-          root = A_OpExp($1, A_plus, $3);
           $$ = A_OpExp($1, A_plus, $3);
       }
       |
       '(' EXPR OP_MULTIPLY EXPR ')' 
       {
-          root = A_OpExp($2, A_times, $4);
           $$ = A_OpExp($2, A_times, $4);
       }
       |
       EXPR OP_MULTIPLY EXPR
       {
-          root = A_OpExp($1, A_times, $3);
           $$ = A_OpExp($1, A_times, $3);
       }
       |
       '(' EXPR OP_MINUS EXPR ')'
       {
-          root = A_OpExp($2, A_minus, $4);
           $$ = A_OpExp($2, A_minus, $4);
       }
       |
       EXPR OP_MINUS EXPR
       {
-        root = A_OpExp($1, A_minus, $3);
         $$ = A_OpExp($1, A_minus, $3);
       }
       |
       '(' EXPR OP_DIV EXPR ')'
       {
-          root = A_OpExp($2, A_div, $4);
           $$ = A_OpExp($2, A_div, $4);
       }
       |
       EXPR OP_DIV EXPR
       {
-          root = A_OpExp($1, A_div, $3);
           $$ = A_OpExp($1, A_div, $3);
       }
       |
 	  '(' STM ',' EXPR ')'
       {
-		  root = A_EseqExp($2, $4);
 		  $$ = A_EseqExp($2, $4);
       }
 %%

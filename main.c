@@ -6,7 +6,6 @@
 #include "print_slp.h"
 #include "interp.h"
 
-A_exp root;
 A_stm root_stm;
 
 extern int yyparse();
@@ -33,7 +32,8 @@ int main(int argc, const char * argv[]) {
     freopen(argv[2], "w", stdout);
 
     yyparse();
-    print_slp_stmt(stdout, root_stm);
+    // print_slp_stmt(stdout, root_stm);
+    // fprintf(stdout, "\n");
     generate_main_ll(stdout, root_stm);
     return 0;
 }
