@@ -3,6 +3,7 @@
 #include "slp.h"
 
 extern A_exp root;
+extern A_stm root_stm;
 
 extern int yylex();
 extern void yyerror(char*);
@@ -16,19 +17,57 @@ extern int  yywrap();
 %union
 {
     int token; // 例：数字类
+    string id;
     A_exp expr; // 例：自定义的类
+    A_stm stm; // statement
+    A_expList explist;
 }
 
 // token的类
 // %token <name in union> token_name_1 token_name_2
-%token <token> OP_PLUS OP_MULTIPLY
+%token <token> OP_PLUS OP_MULTIPLY OP_MINUS OP_DIV END
+%token <token> ASSIGN PRINT
 %token <token> NUMBER
-%token <expr> IDENTIFIER
+%token <id> IDENTIFIER
 
 // 非终结符的类
 %type <expr> EXPR
+%type <stm> STM
+%type <explist> EXPLIST
 
 %%
+
+STM:  IDENTIFIER ASSIGN EXPR
+      {
+          $$ = A_AssignStm($1, $3);
+      }
+      |
+      PRINT '(' EXPLIST ')'
+      {
+          $$ = A_PrintStm($3);
+      }
+      |
+      STM ';'
+      {
+        
+      }
+      |
+      STM ';' STM
+      {
+          root_stm = A_CompoundStm($1, $3);
+          $$ = A_CompoundStm($1, $3);
+      }
+
+EXPLIST: 
+      EXPR
+      {
+          $$ = A_LastExpList($1);
+      }
+      |
+      EXPR ',' EXPLIST 
+      {
+          $$ = A_PairExpList($1, $3);
+      }
 
 EXPR: NUMBER
       {
@@ -37,7 +76,7 @@ EXPR: NUMBER
       | 
       IDENTIFIER 
       {
-          $$ = $1;
+          $$ = A_IdExp($1);
       }
       |
       '(' EXPR OP_PLUS EXPR ')' 
@@ -45,11 +84,53 @@ EXPR: NUMBER
           root = A_OpExp($2, A_plus, $4);
           $$ = A_OpExp($2, A_plus, $4);
       } 
-      | 
+      |
+      EXPR OP_PLUS EXPR
+      {
+          root = A_OpExp($1, A_plus, $3);
+          $$ = A_OpExp($1, A_plus, $3);
+      }
+      |
       '(' EXPR OP_MULTIPLY EXPR ')' 
       {
           root = A_OpExp($2, A_times, $4);
           $$ = A_OpExp($2, A_times, $4);
+      }
+      |
+      EXPR OP_MULTIPLY EXPR
+      {
+          root = A_OpExp($1, A_times, $3);
+          $$ = A_OpExp($1, A_times, $3);
+      }
+      |
+      '(' EXPR OP_MINUS EXPR ')'
+      {
+          root = A_OpExp($2, A_minus, $4);
+          $$ = A_OpExp($2, A_minus, $4);
+      }
+      |
+      EXPR OP_MINUS EXPR
+      {
+        root = A_OpExp($1, A_minus, $3);
+        $$ = A_OpExp($1, A_minus, $3);
+      }
+      |
+      '(' EXPR OP_DIV EXPR ')'
+      {
+          root = A_OpExp($2, A_div, $4);
+          $$ = A_OpExp($2, A_div, $4);
+      }
+      |
+      EXPR OP_DIV EXPR
+      {
+          root = A_OpExp($1, A_div, $3);
+          $$ = A_OpExp($1, A_div, $3);
+      }
+      |
+	  '(' STM ',' EXPR ')'
+      {
+		  root = A_EseqExp($2, $4);
+		  $$ = A_EseqExp($2, $4);
       }
 %%
 
