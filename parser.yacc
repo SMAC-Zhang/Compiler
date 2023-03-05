@@ -86,19 +86,9 @@ EXPR: NUMBER
           $$ = A_OpExp($2, A_plus, $4);
       } 
       |
-      EXPR OP_PLUS EXPR
-      {
-          $$ = A_OpExp($1, A_plus, $3);
-      }
-      |
       '(' EXPR OP_MULTIPLY EXPR ')' 
       {
           $$ = A_OpExp($2, A_times, $4);
-      }
-      |
-      EXPR OP_MULTIPLY EXPR
-      {
-          $$ = A_OpExp($1, A_times, $3);
       }
       |
       '(' EXPR OP_MINUS EXPR ')'
@@ -106,19 +96,29 @@ EXPR: NUMBER
           $$ = A_OpExp($2, A_minus, $4);
       }
       |
-      EXPR OP_MINUS EXPR
-      {
-        $$ = A_OpExp($1, A_minus, $3);
-      }
-      |
       '(' EXPR OP_DIV EXPR ')'
       {
           $$ = A_OpExp($2, A_div, $4);
       }
       |
+      EXPR OP_MULTIPLY EXPR
+      {
+          $$ = A_OpExp($1, A_times, $3);
+      }
+      |
       EXPR OP_DIV EXPR
       {
           $$ = A_OpExp($1, A_div, $3);
+      }
+      |
+      EXPR OP_PLUS EXPR
+      {
+          $$ = A_OpExp($1, A_plus, $3);
+      }
+      |
+      EXPR OP_MINUS EXPR
+      {
+        $$ = A_OpExp($1, A_minus, $3);
       }
       |
 	  '(' STM ',' EXPR ')'
