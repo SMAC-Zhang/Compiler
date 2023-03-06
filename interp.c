@@ -75,6 +75,9 @@ static void interp_print_stmt(FILE *stream, A_expList expList) {
 }
 
 void interp_stmt(FILE *stream, A_stm stm) {
+    if (stm == NULL) {
+        return;
+    }
     switch(stm->kind) {
     case A_compoundStm:
         interp_stmt(stream, stm->u.compound.stm1);

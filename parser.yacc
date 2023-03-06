@@ -2,14 +2,13 @@
 #include<stdio.h>
 #include "slp.h"
 
-extern A_exp root;
 extern A_stm root_stm;
 
 extern int yylex();
 extern void yyerror(char*);
 extern int  yywrap();
 
-// extern int yydebug = 1;
+extern int yydebug = 1;
 
 
 %}
@@ -33,7 +32,10 @@ extern int  yywrap();
 // 非终结符的类
 %type <expr> EXPR
 %type <stm> STM
+%type <stm> CSTM
 %type <explist> EXPLIST
+
+%start CSTM
 
 %%
 
@@ -48,16 +50,16 @@ STM:  IDENTIFIER ASSIGN EXPR
           root_stm = A_PrintStm($3);
           $$ = A_PrintStm($3);
       }
-      |
-      STM ';'
-      {
 
-      }
-      |
-      STM ';' STM
+CSTM: STM ';' CSTM
       {
           root_stm = A_CompoundStm($1, $3);
           $$ = A_CompoundStm($1, $3);
+      }
+      |
+      {
+          root_stm = A_CompoundStm(NULL, NULL);
+          $$ = A_CompoundStm(NULL, NULL);
       }
 
 EXPLIST: 
@@ -99,26 +101,6 @@ EXPR: NUMBER
       '(' EXPR OP_DIV EXPR ')'
       {
           $$ = A_OpExp($2, A_div, $4);
-      }
-      |
-      EXPR OP_MULTIPLY EXPR
-      {
-          $$ = A_OpExp($1, A_times, $3);
-      }
-      |
-      EXPR OP_DIV EXPR
-      {
-          $$ = A_OpExp($1, A_div, $3);
-      }
-      |
-      EXPR OP_PLUS EXPR
-      {
-          $$ = A_OpExp($1, A_plus, $3);
-      }
-      |
-      EXPR OP_MINUS EXPR
-      {
-        $$ = A_OpExp($1, A_minus, $3);
       }
       |
 	  '(' STM ',' EXPR ')'
