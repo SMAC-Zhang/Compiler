@@ -8,7 +8,7 @@ extern int yylex();
 extern void yyerror(char*);
 extern int  yywrap();
 
-extern int yydebug = 1;
+// extern int yydebug = 1;
 
 
 %}
