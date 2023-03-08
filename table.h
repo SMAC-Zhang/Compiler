@@ -17,6 +17,6 @@ struct IntAndTable {
 };
 
 Table_ Table(string id, int value, Table_ tail);
-int find_in_table(string id);
+int table_lookup(string id);
 
 #endif // #ifndef __TABLE_H

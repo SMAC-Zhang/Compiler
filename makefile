@@ -1,26 +1,42 @@
-TESTCASE_DIR := pretest-lab2
+TESTCASE_DIR := tests
 TESTCASES = $(wildcard $(TESTCASE_DIR)/*.c)
 LLFILES = $(patsubst $(TESTCASE_DIR)/%.c,$(TESTCASE_DIR)/%.ll,$(TESTCASES))
 
 .SECONDARY: $(LLFILES)
 
-autograde: $(patsubst $(TESTCASE_DIR)/%.c, $(TESTCASE_DIR)/%.output, $(TESTCASES))
+compile: $(patsubst $(TESTCASE_DIR)/%.c, $(TESTCASE_DIR)/%_compile.output, $(TESTCASES))
+interp: $(patsubst $(TESTCASE_DIR)/%.c, $(TESTCASE_DIR)/%_interp.output, $(TESTCASES))
 
-$(TESTCASE_DIR)/%.ll: $(TESTCASE_DIR)/%.c a.out 
-	./a.out $< $@
 
-$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.ll lib.ll
-	llvm-link $< lib.ll -S -o $(TESTCASE_DIR)/out.ll
-	lli $(TESTCASE_DIR)/out.ll > $@
+$(TESTCASE_DIR)/%.ll: $(TESTCASE_DIR)/%.c compile.out
+	@echo TEST $*
+	@./compile.out $< $@
 
-a.out: lex.yy.o y.tab.o main.c main.o slp.o util.o print_slp.o interp.o table.o
-	cc -g main.o slp.o util.o y.tab.o lex.yy.o print_slp.o interp.o table.o
+$(TESTCASE_DIR)/%_compile.output: $(TESTCASE_DIR)/%.ll $(TESTCASE_DIR)/%.exp lib.ll
+	@llvm-link $< lib.ll -S -o $(TESTCASE_DIR)/out.ll
+	@lli $(TESTCASE_DIR)/out.ll > $@
+	@diff $@ $(word 2,$^)
+	@echo PASS $*
+	@echo
+
+$(TESTCASE_DIR)/%_interp.output: $(TESTCASE_DIR)/%.c $(TESTCASE_DIR)/%.exp interp.out
+	@echo TEST $*
+	@./interp.out $< $@
+	@diff $@ $(word 2,$^)
+	@echo PASS $*
+	@echo
+
+compile.out: lex.yy.o y.tab.o compile_main.c compile_main.o slp.o util.o print_slp.o compile_slp.o table.o
+	cc -g compile_main.o slp.o util.o y.tab.o lex.yy.o print_slp.o compile_slp.o table.o -o $@
+
+interp.out: lex.yy.o y.tab.o interp_main.c interp_main.o slp.o util.o print_slp.o interp_slp.o table.o
+	cc -g interp_main.o slp.o util.o y.tab.o lex.yy.o print_slp.o interp_slp.o table.o -o $@
 
 lib.ll: libsysy.c libsysy.h
 	clang -S -emit-llvm libsysy.c -o lib.ll -O0
 
-main.o: main.c slp.h slp.c util.h util.c print_slp.h print_slp.c
-	cc -g -c main.c
+compile_main.o: compile_main.c slp.h slp.c util.h util.c print_slp.h print_slp.c compile_slp.h compile_slp.c
+	cc -g -c compile_main.c
 
 lex.yy.c: lexer.lex y.tab.h y.tab.c
 	lex lexer.lex
@@ -49,8 +65,11 @@ print_slp.o: print_slp.c print_slp.h slp.h
 table.o: table.c table.h util.h
 	cc -g -c table.c
 
-interp.o: interp.c interp.h slp.h table.h
-	cc -g -c interp.c
+compile_slp.o: compile_slp.c compile_slp.h slp.h table.h
+	cc -g -c compile_slp.c
+
+interp_slp.o: interp_slp.c interp_slp.h slp.h table.h
+	cc -g -c interp_slp.c
 
 clean: 
-	rm -f a.out *.o lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.ll $(TESTCASE_DIR)/*.output
+	rm -f *.out *.o lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.ll $(TESTCASE_DIR)/*.output

@@ -24,7 +24,7 @@ extern int  yywrap();
 
 // token的类
 // %token <name in union> token_name_1 token_name_2
-%token <token> OP_PLUS OP_MULTIPLY OP_MINUS OP_DIV END
+%token <token> OP_PLUS OP_MULTIPLY OP_MINUS OP_DIV
 %token <token> ASSIGN PRINT
 %token <token> NUMBER
 %token <id> IDENTIFIER

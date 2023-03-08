@@ -13,7 +13,7 @@ Table_ Table(string id, int value, Table_ tail)  {
     return t;
 }
 
-int find_in_table(string id) {
+int table_lookup(string id) {
     Table_ t = head;
     while (t) {
         if (strcmp(t->id, id) == 0) {
