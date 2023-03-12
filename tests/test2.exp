@@ -1,3 +1,4 @@
-4
-0
-4
+public int main () {
+a=216;
+putint(a);
+}

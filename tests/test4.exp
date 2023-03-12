@@ -1,1 +1,7 @@
-32731
+public int main () {
+val=5;
+val=val+({putint(val);
+val=3;
+} val-1)*val;
+putint(val);
+}
