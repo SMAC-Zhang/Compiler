@@ -53,30 +53,30 @@ extern int len_int();
 %%
 PROG: MAIN_METHOD
 	{
-		root = A_Prog($1->pos, $1, NULL);
-		$$ = A_Prog($1->pos, $1, NULL);
+		root = A_Prog(A_Pos(line, pos), $1, NULL);
+		$$ = A_Prog(A_Pos(line, pos), $1, NULL);
 	}
 
 MAIN_METHOD: PUBLIC INT MAIN '(' ')' '{' STM_LIST '}'
 	{
-		$$ = A_MainMethod(A_Pos($7->head->pos->line, $7->head->pos->pos - 19), NULL, $7);
+		$$ = A_MainMethod(A_Pos(line, pos), NULL, $7);
 	}
 
 STM: 
 	IDENTIFIER '=' EXP ';' 
 	{
-		A_exp e = A_IdExp(A_Pos($3->pos->line, $3->pos->pos - len_id($1) - 2), $1);
-		$$ = A_AssignStm(e->pos, e, NULL, $3);
+		A_exp e = A_IdExp(A_Pos(line, pos), $1);
+		$$ = A_AssignStm(A_Pos(line, pos), e, NULL, $3);
 	}
 	|
 	PUTINT '(' EXP ')' ';'
 	{
-		$$ = A_Putint(A_Pos($3->pos->line, $3->pos->pos - 7), $3);
+		$$ = A_Putint(A_Pos(line, pos), $3);
 	}
 	|
 	PUTCH '(' EXP ')' ';'
 	{
-		$$ = A_Putch(A_Pos($3->pos->line, $3->pos->pos - 6), $3);
+		$$ = A_Putch(A_Pos(line, pos), $3);
 	}
 
 STM_LIST:
@@ -92,47 +92,47 @@ STM_LIST:
 EXP:
 	EXP OP_PLUS EXP
 	{
-		$$ = A_OpExp($1->pos, $1, A_plus, $3);
+		$$ = A_OpExp(A_Pos(line, pos), $1, A_plus, $3);
 	}
 	|
 	EXP OP_MINUS EXP
 	{
-		$$ = A_OpExp($1->pos, $1, A_minus, $3);
+		$$ = A_OpExp(A_Pos(line, pos), $1, A_minus, $3);
 	}
 	|
 	OP_MINUS EXP %prec UMINUS
 	{
-		$$ = A_MinusExp(A_Pos($2->pos->line, $2->pos->pos - 1), $2);
+		$$ = A_MinusExp(A_Pos(line, pos), $2);
 	}
 	|
 	EXP OP_MULTIPLY EXP
 	{
-		$$ = A_OpExp($1->pos, $1, A_times, $3);
+		$$ = A_OpExp(A_Pos(line, pos), $1, A_times, $3);
 	}
 	|
 	EXP OP_DIV EXP
 	{
-		$$ = A_OpExp($1->pos, $1, A_div, $3);
+		$$ = A_OpExp(A_Pos(line, pos), $1, A_div, $3);
 	}
 	|
 	INT_CONST
 	{
-		$$ = A_NumConst(A_Pos(line, pos - len_int($1) + 1), $1);
+		$$ = A_NumConst(A_Pos(line, pos), $1);
 	}
 	|
 	IDENTIFIER
 	{
-		$$ = A_IdExp(A_Pos(line, pos - len_id($1) + 1), $1);
+		$$ = A_IdExp(A_Pos(line, pos), $1);
 	}
 	|
 	'(' EXP ')' 
 	{
-		$$ = A_EscExp(A_Pos($2->pos->line, $2->pos->pos - 1), NULL, $2);
+		$$ = A_EscExp(A_Pos(line, pos), NULL, $2);
 	}
 	|
 	'(' '{' STM_LIST '}' EXP ')'
 	{
-		$$ = A_EscExp(A_Pos($3->head->pos->line, $3->head->pos->pos - 2), $3, $5);
+		$$ = A_EscExp(A_Pos(line, pos), $3, $5);
 	}
 
 %%
