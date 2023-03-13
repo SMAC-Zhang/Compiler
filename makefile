@@ -3,7 +3,7 @@ TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fdmj)
 
 test: $(patsubst $(TESTCASE_DIR)/%.fdmj, $(TESTCASE_DIR)/%.output, $(TESTCASES))
 
-$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fdmj $(TESTCASE_DIR)/%.exp main
+$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fdmj main
 	@echo TEST $*
 	@./main < $< > $@
 
