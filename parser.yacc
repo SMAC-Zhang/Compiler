@@ -86,7 +86,7 @@ STM_LIST:
 	}
 	|
 	{
-
+		$$ = A_StmList(NULL, NULL);
 	}
 
 EXP:
