@@ -6,7 +6,7 @@
 typedef struct A_pos_* A_pos; //position information
 typedef struct A_type_* A_type;
 typedef struct A_prog_* A_prog;
-typedef struct A_mainMethod* A_mainMethod;
+typedef struct A_mainMethod_* A_mainMethod;
 typedef struct A_classDecl_* A_classDecl;
 typedef struct A_classDeclList_* A_classDeclList;
 typedef struct A_methodDecl_* A_methodDecl;
@@ -42,7 +42,7 @@ struct A_prog_ {
     A_classDeclList cdl; 
 };
 
-struct A_mainMethod {
+struct A_mainMethod_ {
     A_pos pos;
     A_varDeclList vdl;
     A_stmList sl;

@@ -1,48 +1,69 @@
 %{
 
 #include "util.h"
-#include "slp.h"
+#include "fdmjast.h"
 #include "y.tab.h"
 
 int c;
+int line = 1;
+int pos = 0;
+
+%start COMMENT1 COMMENT2
 
 %}
 
 %%
 
-" " ;
-"\r\n";
-"\t";
-"\r";
-"\n";
-"+" { yylval.token = OP_PLUS; return OP_PLUS; }
-"*" { yylval.token = OP_MULTIPLY; return OP_MULTIPLY; }
-"-" { yylval.token = OP_MINUS; return OP_MINUS; }
-"/" { yylval.token = OP_DIV; return OP_DIV; }
-":=" { yylval.token = ASSIGN; return ASSIGN; }
-"print" { yylval.token = PRINT; return PRINT; }
-"("|")" {
-    c = yytext[0];
-    return(c);
+"//" { BEGIN COMMENT1; }
+"/*" { BEGIN COMMENT2; }
+<COMMENT1> "\n" { line++; pos = 0; BEGIN INITIAL; }
+<COMMENT1> "\t" { pos += 4; }
+<COMMENT1> . { pos++; }
+<COMMENT2> "\n" { line++; pos = 0;}
+<COMMENT2> "\t" { pos += 4; }
+<COMMENT2> . { pos++; }
+<COMMENT2> "*/" { pos++; BEGIN INITIAL; }
+
+<INITIAL> " " { pos++; }
+<INITIAL> "\t" { pos += 4; };
+<INITIAL> "\n" { line++; pos = 0;};
+
+<INITIAL> "+" { pos++; yylval.token = A_plus; return OP_PLUS; }
+<INITIAL> "*" { pos++; yylval.token = A_times; return OP_MULTIPLY; }
+<INITIAL> "-" { pos++; yylval.token = A_minus; return OP_MINUS; }
+<INITIAL> "/" { pos++; yylval.token = A_div; return OP_DIV; }
+<INITIAL> "public" { pos += 6; yylval.token = PUBLIC; return PUBLIC; }
+<INITIAL> "int" { pos += 3; yylval.token = INT; return INT; }
+<INITIAL> "main" { pos += 4; yylval.token = MAIN; return MAIN; }
+<INITIAL> "putint" { pos+= 6; yylval.token = PUTINT; return PUTINT; }
+<INITIAL> "putch" { pos += 5; yylval.token = PUTCH; return PUTCH; }
+
+<INITIAL> [1-9][0-9]* {
+    pos += yyleng;
+    yylval.token = calc(yytext, yyleng);
+    return INT_CONST;
 }
-","|";" {
-    c = yytext[0];
-    return(c);
+<INITIAL> 0 {
+    pos++;
+    yylval.token = 0;
+    return INT_CONST;
 }
-[a-z_A-Z][a-z_A-Z0-9]* { 
+
+<INITIAL> [a-z_A-Z][a-z_A-Z0-9]* { 
+    pos += yyleng;
     yylval.id = String(yytext);
     return IDENTIFIER;
 }
-[1-9][0-9]* {
-    yylval.token = calc(yytext, yyleng);
-    return NUMBER;
+
+<INITIAL> "("|")"|"="|";"|"{"|"}" {
+    pos++;
+    c = yytext[0];
+    return(c);
 }
-0 {
-    yylval.token = 0;
-    return NUMBER;
-}
-. {
-    printf("Illegal input \"%c\"\n", yytext[0]);
+
+<INITIAL> . {
+    pos++;
+    printf("Illegal input \"%c\" found at line =%d, pos=%d\n", yytext[0], line, pos);
 }
 %%
 
