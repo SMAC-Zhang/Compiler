@@ -4,10 +4,16 @@ TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fdmj)
 test: $(patsubst $(TESTCASE_DIR)/%.fdmj, $(TESTCASE_DIR)/%.output, $(TESTCASES))
 
 $(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fdmj main
-	@./main < $<  > $@
+	@./main $@ < $<  
 
-main: main.c util.h util.c printast.h printast.c fdmjast.h fdmjast.c y.tab.c y.tab.h
-	@cc -g main.c util.h util.c printast.h printast.c fdmjast.h fdmjast.c y.tab.c y.tab.h -o main
+main: main.o util.o printast.o fdmjast.o y.tab.o lex.yy.o
+	@cc -g $^ -o $@
+
+main.o: main.c util.h util.c printast.h printast.c fdmjast.h fdmjast.c y.tab.c y.tab.h
+	@cc -g -c main.c
+
+fdmjast.o: util.h fdmjast.c fdmjast.h
+	@cc -g -c fdmjast.c
 
 lex.yy.c: lexer.lex y.tab.h y.tab.c
 	@lex lexer.lex
@@ -31,4 +37,4 @@ printast.o: printast.c printast.h fdmjast.h
 	@cc -g -c printast.c
 
 clean: 
-	rm -f *.o lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output
+	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output

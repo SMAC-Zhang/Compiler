@@ -10,6 +10,8 @@ extern int line, pos;
 extern int yylex();
 extern void yyerror(char*);
 extern int  yywrap();
+extern int len_id();
+extern int len_int();
 
 // extern int yydebug = 1;
 
@@ -23,6 +25,7 @@ extern int  yywrap();
     A_type type;
     A_mainMethod main;
     A_stm stm;
+	A_stmList stmlist;
     A_exp exp;
 }
 
@@ -62,7 +65,8 @@ MAIN_METHOD: PUBLIC INT MAIN '(' ')' '{' STM_LIST '}'
 STM: 
 	IDENTIFIER '=' EXP ';' 
 	{
-		$$ = A_AssignStm($1->pos, $1, NULL, $3);
+		A_exp e = A_IdExp(A_Pos($3->pos->line, $3->pos->pos - len_id($1) - 2), $1);
+		$$ = A_AssignStm(e->pos, e, NULL, $3);
 	}
 	|
 	PUTINT '(' EXP ')' ';'
