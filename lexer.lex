@@ -25,18 +25,18 @@ int pos = 0;
 <COMMENT2>"*/" { pos++; BEGIN INITIAL; }
 
 <INITIAL>" " { pos++; }
-<INITIAL>"\t" { pos += 4; };
-<INITIAL>"\n" { line++; pos = 0;};
+<INITIAL>"\t" { pos += 4; }
+<INITIAL>"\n" { line++; pos = 0;}
 
-<INITIAL>"+" { pos++; yylval.token = A_plus; return OP_PLUS; }
-<INITIAL>"*" { pos++; yylval.token = A_times; return OP_MULTIPLY; }
-<INITIAL>"-" { pos++; yylval.token = A_minus; return OP_MINUS; }
-<INITIAL>"/" { pos++; yylval.token = A_div; return OP_DIV; }
-<INITIAL>"public" { pos += 6; yylval.token = PUBLIC; return PUBLIC; }
-<INITIAL>"int" { pos += 3; yylval.token = INT; return INT; }
-<INITIAL>"main" { pos += 4; yylval.token = MAIN; return MAIN; }
-<INITIAL>"putint" { pos+= 6; yylval.token = PUTINT; return PUTINT; }
-<INITIAL>"putch" { pos += 5; yylval.token = PUTCH; return PUTCH; }
+<INITIAL>"+" { pos++; return OP_PLUS; }
+<INITIAL>"*" { pos++; return OP_MULTIPLY; }
+<INITIAL>"-" { pos++; return OP_MINUS; }
+<INITIAL>"/" { pos++; return OP_DIV; }
+<INITIAL>"public" { pos += 6; return PUBLIC; }
+<INITIAL>"int" { pos += 3; return INT; }
+<INITIAL>"main" { pos += 4; return MAIN; }
+<INITIAL>"putint" { pos+= 6; return PUTINT; }
+<INITIAL>"putch" { pos += 5; return PUTCH; }
 
 <INITIAL>[1-9][0-9]* {
     pos += yyleng;
