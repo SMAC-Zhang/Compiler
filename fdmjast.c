@@ -252,12 +252,13 @@ A_exp A_CallExp(A_pos pos, A_exp obj, string fun, A_expList el) {
     return e;
 }
 
-A_exp A_ClassVarExp(A_pos pos, A_exp obj, string var) {
+A_exp A_ClassVarExp(A_pos pos, A_exp obj, string var, A_exp arrpos) {
     A_exp e=checked_malloc(sizeof(*e));
     e->pos=pos;
     e->kind=A_classVarExp;
     e->u.classvar.obj=obj;
     e->u.classvar.var=var;
+    e->u.classvar.arrpos=arrpos;
     return e;
 }
 

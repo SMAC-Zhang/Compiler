@@ -207,6 +207,7 @@ struct A_exp_ {
         struct {
                 A_exp obj; //this must evaluate to object
                 string var; //this is the name of the variable
+                A_exp arrpos; //this is for the array position (if it's array)
         } classvar;
         struct {
                 A_stmList ns;
@@ -257,7 +258,7 @@ A_expList A_ExpList(A_exp, A_expList);
 A_exp A_OpExp(A_pos, A_exp, A_binop, A_exp);
 A_exp A_ArrayExp(A_pos, A_exp, A_exp);
 A_exp A_CallExp(A_pos, A_exp, string, A_expList);
-A_exp A_ClassVarExp(A_pos, A_exp, string);
+A_exp A_ClassVarExp(A_pos, A_exp, string, A_exp);
 A_exp A_NumConst(A_pos, int);
 A_exp A_BoolConst(A_pos, bool);
 A_exp A_LengthExp(A_pos, A_exp);

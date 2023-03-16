@@ -526,6 +526,11 @@ void printA_ClassVarExp(FILE *out, A_exp e) {
     else {
        printA_Exp(out, e->u.classvar.obj);
        fprintf(out, ".%s", e->u.classvar.var);
+       if (e->u.classvar.arrpos!=NULL) {
+	  fprintf(out, "[");
+          printA_Exp(out, e->u.classvar.arrpos);
+          fprintf(out, "]");
+       }
     }
     return;
 }
@@ -644,7 +649,7 @@ void printA_MinusExp(FILE *out, A_exp e) {
     fprintf(out, "Entering printA_MinusExp...\n");
 #endif
     if (!e) return;
-    if (e->kind != A_minusExp) fprintf(out, "Not Minus exp!\n");
+    if (e->kind != A_notExp) fprintf(out, "Not Minus exp!\n");
     else {
        fprintf(out, "-");
        printA_Exp(out, e->u.e);
