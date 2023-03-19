@@ -97,9 +97,10 @@ void printA_ClassDecl(FILE *out, A_classDecl cd) {
 #endif
     if (!cd) return ;
     printA_Pos(out, cd->pos);
-    fprintf(out, "public class %s {\n", cd->id);
+    fprintf(out, "public class %s ", cd->id);
     if (cd->parentID) 
-        fprintf(out, "extends %s {\n", cd->parentID);
+        fprintf(out, "extends %s ", cd->parentID);
+    fprintf(out, "{\n");
     if (cd->vdl) printA_VarDeclList(out, cd->vdl);
     if (cd->mdl) printA_MethodDeclList(out, cd->mdl);
     fprintf(out, "}\n");
@@ -255,8 +256,12 @@ void printA_WhileStm(FILE *out, A_stm s) {
     else {
         fprintf(out, "while (");
         printA_Exp(out, s->u.while_stat.e);
-        fprintf(out, ")\n");
-        printA_Stm(out, s->u.while_stat.s);
+        if (!s->u.while_stat.s)
+            fprintf(out, ");\n");
+        else {
+            fprintf(out, ")\n");
+            printA_Stm(out, s->u.while_stat.s);
+        }
     }
     return;
 }
@@ -476,7 +481,10 @@ void printA_OpExp(FILE *out, A_exp e) {
     case A_or: fprintf(out, "||"); break;
     case A_less: fprintf(out, "<"); break;
     case A_le: fprintf(out, "<="); break;
+    case A_greater: fprintf(out, ">"); break;
+    case A_ge: fprintf(out, ">="); break;
     case A_eq: fprintf(out, "=="); break;
+    case A_neq: fprintf(out, "!="); break;
     case A_plus: fprintf(out, "+"); break;
     case A_minus: fprintf(out, "-"); break;
     case A_times: fprintf(out, "*"); break;
@@ -637,8 +645,9 @@ void printA_NotExp(FILE *out, A_exp e) {
     if (!e) return;
     if (e->kind != A_notExp) fprintf(out, "Not Not exp!\n");
     else {
-       fprintf(out, "not ");
+       fprintf(out, "!(");
        printA_Exp(out, e->u.e);
+        fprintf(out, ")");
     }
     return;
 }

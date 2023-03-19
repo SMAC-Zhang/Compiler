@@ -36,6 +36,8 @@ int pos = 0;
 <INITIAL>">=" { yylval.token = A_Pos(line, pos); pos += yyleng; return GE; }
 <INITIAL>"<" { yylval.token = A_Pos(line, pos); pos += yyleng; return LESS; }
 <INITIAL>">" { yylval.token = A_Pos(line, pos); pos += yyleng; return GREATER; }
+<INITIAL>"==" { yylval.token = A_Pos(line, pos); pos += yyleng; return EQ; }
+<INITIAL>"!=" { yylval.token = A_Pos(line, pos); pos += yyleng; return NEQ; }
 <INITIAL>"&&" { yylval.token = A_Pos(line, pos); pos += yyleng; return AND; }
 <INITIAL>"||" { yylval.token = A_Pos(line, pos); pos += yyleng; return OR; }
 <INITIAL>"!" { yylval.token = A_Pos(line, pos); pos += yyleng; return NOT; }
@@ -43,8 +45,6 @@ int pos = 0;
 <INITIAL>"public" { yylval.token = A_Pos(line, pos); pos += yyleng; return PUBLIC; }
 <INITIAL>"int" { yylval.token = A_Pos(line, pos); pos += yyleng; return INT; }
 <INITIAL>"main" { yylval.token = A_Pos(line, pos); pos += yyleng; return MAIN; }
-<INITIAL>"putint" { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTINT; }
-<INITIAL>"putch" { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTCH; }
 <INITIAL>"class" { yylval.token = A_Pos(line, pos); pos += yyleng; return CLASS; }
 <INITIAL>"extends" { yylval.token = A_Pos(line, pos); pos += yyleng; return EXTENDS; }
 <INITIAL>"if" { yylval.token = A_Pos(line, pos); pos += yyleng; return IF; }
@@ -56,15 +56,15 @@ int pos = 0;
 
 <INITIAL>"putint" { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTINT; }
 <INITIAL>"putch" { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTCH; }
-<INITIAL>"putarray" { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTARRAT; }
+<INITIAL>"putarray" { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTARRAY; }
 <INITIAL>"getint" { yylval.token = A_Pos(line, pos); pos += yyleng; return GETINT; }
 <INITIAL>"getch" { yylval.token = A_Pos(line, pos); pos += yyleng; return GETCH; }
 <INITIAL>"getarray" { yylval.token = A_Pos(line, pos); pos += yyleng; return GETARRAY; }
 <INITIAL>"starttime" { yylval.token = A_Pos(line, pos); pos += yyleng; return STARTTIME; }
 <INITIAL>"stoptime" { yylval.token = A_Pos(line, pos); pos += yyleng; return STOPTIME; }
 
-<INITIAL>"true" { yylval.token = A_Pos(line, pos); pos += yyleng; return TRUE; }
-<INITIAL>"false" { yylval.token = A_Pos(line, pos); pos += yyleng; return FALSE; }
+<INITIAL>"true" { yylval.token = A_Pos(line, pos); pos += yyleng; return True; }
+<INITIAL>"false" { yylval.token = A_Pos(line, pos); pos += yyleng; return False; }
 <INITIAL>"length" { yylval.token = A_Pos(line, pos); pos += yyleng; return LENGTH; }
 <INITIAL>"this" { yylval.token = A_Pos(line, pos); pos += yyleng; return THIS; }
 <INITIAL>"new" { yylval.token = A_Pos(line, pos); pos += yyleng; return NEW; }
@@ -92,6 +92,7 @@ int pos = 0;
 }
 
 <INITIAL>"{" { yylval.token = A_Pos(line, pos); pos++; return BRACE; }
+<INITIAL>"[" { yylval.token = A_Pos(line, pos); pos++; return BRACKET; }
 <INITIAL>"(" { yylval.token = A_Pos(line, pos); pos++; return PARENTHESIS; }
 <INITIAL>")"|"="|','|";"|"}"|"["|"]"|"." {
     pos++;

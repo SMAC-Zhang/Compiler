@@ -20,7 +20,6 @@ extern int  yywrap();
     A_pos token;
     string id;
     A_prog prog;
-    A_type type;
     A_mainMethod main;
     A_stm stm;
 	A_stmList stmlist;
@@ -38,17 +37,17 @@ extern int  yywrap();
 
 // 运算符
 %token <token> OP_PLUS OP_MULTIPLY OP_MINUS OP_DIV UMINUS
-%token <token> OR AND LESS LE EQ NOT GREATER GE
-//两种左括号，单独处理以获得pos
-%token <token> BRACE PARENTHESIS
+%token <token> OR AND LESS LE EQ NOT GREATER GE NEQ
+//三种左括号，单独处理以获得pos
+%token <token> BRACE BRACKET PARENTHESIS
 // 关键字
-%token <token> PUBLIC INT MAIN PUTCH PUTINT
+%token <token> PUBLIC INT MAIN
 %token <token> CLASS EXTENDS
 %token <token> IF ELSE WHILE CONTINUE BREAK RETURN
 %token <token> PUTINT PUTCH PUTARRAY
 %token <token> GETINT GETCH GETARRAY
 %token <token> STARTTIME STOPTIME
-%token <token> TRUE FALSE LENGTH
+%token <token> True False LENGTH
 %token <token> THIS NEW
 // 数字
 %token <exp> INT_CONST
@@ -68,19 +67,23 @@ extern int  yywrap();
 %type <methodlist> METHOD_LIST
 %type <formallist> FORMAL_LIST FORMAL_REST
 %type <exp> EXP
-%type <explist> EXP_LIST EXP_REST
+%type <explist> EXP_LIST EXP_REST	
 %type <type> TYPE
 %type <explist> INT_CONST_LIST INT_CONST_REST
 
 %start PROG
 %left OR
 %left AND
+%left EQ NEQ
+%left LESS LE GREATER GE
 %left OP_PLUS OP_MINUS
 %left OP_MULTIPLY OP_DIV
-%left UMINUS NOT
+%left UMINUS
+%right NOT
+%left PARENTHESIS BRACKET '.'
 
 %%
-PROG: MAIN_METHOD CLASS_LIST
+PROG: MAIN_METHOD CLASS_DEC_LIST
 	{
 		root = A_Prog($1->pos, $1, $2);
 		$$ = A_Prog($1->pos, $1, $2);
@@ -205,7 +208,7 @@ TYPE:
 		$$ = A_Type($1, A_intType, NULL);
 	}
 	|
-	INT '[' ']'
+	INT BRACKET ']'
 	{
 		$$ = A_Type($1, A_intArrType, NULL);
 	}
@@ -241,12 +244,12 @@ STM:
 		$$ = A_AssignStm($1->pos, $1, NULL, $3);
 	}
 	|
-	EXP '[' EXP ']' '=' EXP ';'
+	EXP BRACKET EXP ']' '=' EXP ';'
 	{
 		$$ = A_AssignStm($1->pos, $1, $3, $6);
 	}
 	|
-	EXP '[' ']' '=' BRACE EXP_LIST '}' ';'
+	EXP BRACKET ']' '=' BRACE EXP_LIST '}' ';'
 	{
 		$$ = A_ArrayInit($1->pos, $1, $6);
 	}
@@ -266,9 +269,9 @@ STM:
 		$$ = A_Break($1);
 	}
 	|
-	RETURN ';'
+	RETURN EXP ';'
 	{
-		$$ = A_Return($1);
+		$$ = A_Return($1, $2);
 	}
 	|
 	PUTINT PARENTHESIS EXP ')' ';'
@@ -281,7 +284,7 @@ STM:
 		$$ = A_Putch($1, $3);
 	}
 	|
-	PUTARRAT PARENTHESIS EXP ',' EXP ')' ';'
+	PUTARRAY PARENTHESIS EXP ',' EXP ')' ';'
 	{
 		$$ = A_Putarray($1, $3, $5);
 	}
@@ -347,14 +350,30 @@ EXP:
 		$$ = A_OpExp($1->pos, $1, A_le, $3);
 	}
 	|
+	EXP GREATER EXP
+	{
+		$$ = A_OpExp($1->pos, $1, A_greater, $3);
+	}
+	|
+	EXP GE EXP
+	{
+		$$ = A_OpExp($1->pos, $1, A_ge, $3);
+	}
+	|
 	EXP EQ EXP
 	{
 		$$ = A_OpExp($1->pos, $1, A_eq, $3);
 	}
 	|
-	EXP '[' EXP ']'
+	EXP NEQ EXP
 	{
-		$$ = A_ArrayExp($1->pos, $1, $3);
+		$$ = A_OpExp($1->pos, $1, A_neq, $3);
+	}
+	|
+	IDENTIFIER BRACKET EXP ']'
+	{
+		A_pos pos = A_Pos($3->pos->line, $3->pos->pos - 1 - strlen($1));
+		$$ = A_ArrayExp(pos, A_IdExp(pos, $1), $3);
 	}
 	|
 	EXP '.' IDENTIFIER PARENTHESIS EXP_LIST ')'
@@ -367,7 +386,7 @@ EXP:
 		$$ = A_ClassVarExp($1->pos, $1, $3, NULL);
 	}
 	|
-	EXP '.' IDENTIFIER '[' EXP ']'
+	EXP '.' IDENTIFIER BRACKET EXP ']'
 	{
 		$$ = A_ClassVarExp($1->pos, $1, $3, $5);
 	}
@@ -377,14 +396,14 @@ EXP:
 		$$ = $1;
 	}
 	|
-	TRUE
+	True
 	{
-		$$ = A_BoolConst($1, 1);
+		$$ = A_BoolConst($1, TRUE);
 	}
 	|
-	FALSE
+	False
 	{
-		$$ = A_BoolConst($1, 0);
+		$$ = A_BoolConst($1, FALSE);
 	}
 	|
 	LENGTH PARENTHESIS EXP ')'
@@ -402,7 +421,7 @@ EXP:
 		$$ = A_ThisExp($1);
 	}
 	|
-	NEW INT '[' EXP ']'
+	NEW INT BRACKET EXP ']'
 	{
 		$$ = A_NewIntArrExp($1, $4);
 	}
@@ -457,7 +476,7 @@ EXP_LIST:
 		$$ = A_ExpList(NULL, NULL);
 	}
 
-EXP_REST
+EXP_REST:
 	',' EXP EXP_REST
 	{
 		$$ = A_ExpList($2, $3);
