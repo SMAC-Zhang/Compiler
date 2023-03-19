@@ -72,6 +72,8 @@ extern int  yywrap();
 %type <explist> INT_CONST_LIST INT_CONST_REST
 
 %start PROG
+%left ']'
+%left '='
 %left OR
 %left AND
 %left EQ NEQ
@@ -80,7 +82,10 @@ extern int  yywrap();
 %left OP_MULTIPLY OP_DIV
 %left UMINUS
 %right NOT
+%left IDENTIFIER
 %left PARENTHESIS BRACKET '.'
+%left IF
+%left ELSE
 
 %%
 PROG: MAIN_METHOD CLASS_DEC_LIST
@@ -95,14 +100,14 @@ MAIN_METHOD: PUBLIC INT MAIN PARENTHESIS ')' BRACE VAR_LIST STM_LIST '}'
 	}
 
 CLASS_DEC:
-	CLASS IDENTIFIER BRACE VAR_LIST METHOD_LIST '}' 
+	PUBLIC CLASS IDENTIFIER BRACE VAR_LIST METHOD_LIST '}' 
 	{
-		$$ = A_ClassDecl($1, $2, NULL, $4, $5);
+		$$ = A_ClassDecl($1, $3, NULL, $5, $6);
 	}
 	|
-	CLASS IDENTIFIER EXTENDS IDENTIFIER BRACE VAR_LIST METHOD_LIST '}' 
+	PUBLIC CLASS IDENTIFIER EXTENDS IDENTIFIER BRACE VAR_LIST METHOD_LIST '}' 
 	{
-		$$ = A_ClassDecl($1, $2, $4, $6, $7);
+		$$ = A_ClassDecl($1, $3, $5, $7, $8);
 	}
 
 CLASS_DEC_LIST:
@@ -224,7 +229,7 @@ STM:
 		$$ = A_IfStm($1, $3, $5, $7);
 	}
 	|
-	IF PARENTHESIS EXP ')' STM
+	IF PARENTHESIS EXP ')' STM %prec IF
 	{
 		$$ = A_IfStm($1, $3, $5, NULL);
 	}
@@ -370,10 +375,9 @@ EXP:
 		$$ = A_OpExp($1->pos, $1, A_neq, $3);
 	}
 	|
-	IDENTIFIER BRACKET EXP ']'
+	EXP BRACKET EXP ']'
 	{
-		A_pos pos = A_Pos($3->pos->line, $3->pos->pos - 1 - strlen($1));
-		$$ = A_ArrayExp(pos, A_IdExp(pos, $1), $3);
+		$$ = A_ArrayExp($1->pos, $1, $3);
 	}
 	|
 	EXP '.' IDENTIFIER PARENTHESIS EXP_LIST ')'
@@ -446,22 +450,22 @@ EXP:
 		$$ = A_EscExp($1, NULL, $2);
 	}
 	|
-	PARENTHESIS '{' STM_LIST '}' EXP ')'
+	PARENTHESIS BRACE STM_LIST '}' EXP ')'
 	{
 		$$ = A_EscExp($1, $3, $5);
 	}
 	|
-	GETINT '(' ')'
+	GETINT PARENTHESIS ')'
 	{
 		$$ = A_Getint($1);
 	}
 	|
-	GETCH '(' ')'
+	GETCH PARENTHESIS ')'
 	{
 		$$ = A_Getch($1);
 	}
 	|
-	GETARRAY '(' EXP ')'
+	GETARRAY PARENTHESIS EXP ')'
 	{
 		$$ = A_Getarray($1, $3);
 	}

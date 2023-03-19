@@ -1,9 +1,9 @@
 TESTCASE_DIR := tests
-TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fdmj)
+TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fmj)
 
-test: $(patsubst $(TESTCASE_DIR)/%.fdmj, $(TESTCASE_DIR)/%.output, $(TESTCASES))
+test: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(TESTCASES))
 
-$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fdmj main
+$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
 	@./main < $< > $@
 
