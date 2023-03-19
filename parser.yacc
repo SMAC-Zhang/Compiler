@@ -66,13 +66,13 @@ extern int  yywrap();
 %type <method> METHOD
 %type <methodlist> METHOD_LIST
 %type <formallist> FORMAL_LIST FORMAL_REST
-%type <exp> EXP
+%type <exp> EXP IntConst
 %type <explist> EXP_LIST EXP_REST	
 %type <type> TYPE
 %type <explist> INT_CONST_LIST INT_CONST_REST
 
 %start PROG
-%left ']'
+%left ']' ')'
 %left '='
 %left OR
 %left AND
@@ -126,7 +126,7 @@ VAR:
 		$$ = A_VarDecl($1->pos, $1, $2, NULL);
 	}
 	|
-	TYPE IDENTIFIER '=' INT_CONST ';'
+	TYPE IDENTIFIER '=' IntConst ';'
 	{
 		$$ = A_VarDecl($1->pos, $1, $2, A_ExpList($4, NULL));
 	}
@@ -146,8 +146,19 @@ VAR_LIST:
 		$$ = A_VarDeclList(NULL, NULL);
 	}
 
+IntConst:
+	INT_CONST
+	{
+		$$ = $1;
+	} 
+	|
+	OP_MINUS INT_CONST %prec UMINUS
+	{
+		$$ = A_NumConst(A_Pos($2->pos->line, $2->pos->pos - 1), -$2->u.num);
+	}
+
 INT_CONST_LIST:
-	INT_CONST INT_CONST_REST
+	IntConst INT_CONST_REST
 	{
 		$$ = A_ExpList($1, $2);
 	}
@@ -157,7 +168,7 @@ INT_CONST_LIST:
 	}
 
 INT_CONST_REST:
-	',' INT_CONST INT_CONST_REST
+	',' IntConst INT_CONST_REST
 	{
 		$$ = A_ExpList($2, $3);
 	}

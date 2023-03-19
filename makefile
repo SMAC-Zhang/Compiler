@@ -3,9 +3,18 @@ TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fmj)
 
 test: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(TESTCASES))
 
+correct: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output2, $(TESTCASES))
+
 $(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
 	@./main < $< > $@
+
+$(TESTCASE_DIR)/%.output2: $(TESTCASE_DIR)/%.output main
+	@echo TEST $*
+	@./main < $< > $@
+	@diff $@ $(word 1,$^)
+	@echo PASS $*
+	@echo
 
 main: main.o util.o printast.o fdmjast.o y.tab.o lex.yy.o
 	@cc -g $^ -o $@
@@ -38,4 +47,4 @@ printast.o: printast.c printast.h fdmjast.h
 	@cc -g -c printast.c
 
 clean: 
-	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output
+	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.output2

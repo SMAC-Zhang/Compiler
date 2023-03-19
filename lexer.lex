@@ -14,8 +14,8 @@ int pos = 0;
 
 %%
 
-"//" { BEGIN COMMENT1; }
-"/*" { BEGIN COMMENT2; }
+<INITIAL>"//" { BEGIN COMMENT1; }
+<INITIAL>"/*" { BEGIN COMMENT2; }
 <COMMENT1>"\n" { line++; pos = 0; BEGIN INITIAL; }
 <COMMENT1>"\t" { pos += 4; }
 <COMMENT1>. { pos++; }
@@ -74,11 +74,7 @@ int pos = 0;
     pos += yyleng;
     return INT_CONST;
 }
-<INITIAL>"-"[1-9][0-9]* {
-    yylval.exp = A_NumConst(A_Pos(line, pos), -calc(yytext + 1, yyleng - 1));
-    pos += yyleng;
-    return INT_CONST;
-}
+
 <INITIAL>0 {
     yylval.exp = A_NumConst(A_Pos(line, pos), 0);
     pos++;
@@ -94,7 +90,7 @@ int pos = 0;
 <INITIAL>"{" { yylval.token = A_Pos(line, pos); pos++; return BRACE; }
 <INITIAL>"[" { yylval.token = A_Pos(line, pos); pos++; return BRACKET; }
 <INITIAL>"(" { yylval.token = A_Pos(line, pos); pos++; return PARENTHESIS; }
-<INITIAL>")"|"="|','|";"|"}"|"["|"]"|"." {
+<INITIAL>")"|"="|","|";"|"}"|"["|"]"|"." {
     pos++;
     c = yytext[0];
     return(c);
