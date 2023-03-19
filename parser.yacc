@@ -117,7 +117,7 @@ CLASS_DEC_LIST:
 	}
 	|
 	{
-		$$ = A_ClassDeclList(NULL, NULL);
+		$$ = NULL;
 	}
 
 VAR:
@@ -143,7 +143,7 @@ VAR_LIST:
 	}
 	|
 	{
-		$$ = A_VarDeclList(NULL, NULL);
+		$$ = NULL;
 	}
 
 IntConst:
@@ -164,7 +164,7 @@ INT_CONST_LIST:
 	}
 	|
 	{
-		$$ = A_ExpList(NULL, NULL);
+		$$ = NULL;
 	}
 
 INT_CONST_REST:
@@ -174,7 +174,7 @@ INT_CONST_REST:
 	}
 	|
 	{
-		$$ = A_ExpList(NULL, NULL);
+		$$ = NULL;
 	}
 
 METHOD:
@@ -190,7 +190,7 @@ METHOD_LIST:
 	}
 	|
 	{
-		$$ = A_MethodDeclList(NULL, NULL);
+		$$ = NULL;
 	}
 
 FORMAL_LIST:
@@ -200,7 +200,7 @@ FORMAL_LIST:
 	}
 	|
 	{
-		$$ = A_FormalList(NULL, NULL);
+		$$ = NULL;
 	}
 
 FORMAL_REST:
@@ -210,7 +210,7 @@ FORMAL_REST:
 	}
 	|
 	{
-		$$ = A_FormalList(NULL, NULL);
+		$$ = NULL;
 	}
 
 TYPE:
@@ -322,7 +322,7 @@ STM_LIST:
 	}
 	|
 	{
-		$$ = A_StmList(NULL, NULL);
+		$$ = NULL;
 	}
 
 EXP:
@@ -488,7 +488,7 @@ EXP_LIST:
 	}
 	|
 	{
-		$$ = A_ExpList(NULL, NULL);
+		$$ = NULL;
 	}
 
 EXP_REST:
@@ -498,7 +498,7 @@ EXP_REST:
 	}
 	|
 	{
-		$$ = A_ExpList(NULL, NULL);
+		$$ = NULL;
 	}
 
 
