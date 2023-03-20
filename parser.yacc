@@ -72,8 +72,6 @@ extern int  yywrap();
 %type <explist> INT_CONST_LIST INT_CONST_REST
 
 %start PROG
-%left ']' ')'
-%left '='
 %left OR
 %left AND
 %left EQ NEQ
@@ -258,11 +256,6 @@ STM:
 	EXP '=' EXP ';'
 	{
 		$$ = A_AssignStm($1->pos, $1, NULL, $3);
-	}
-	|
-	EXP BRACKET EXP ']' '=' EXP ';'
-	{
-		$$ = A_AssignStm($1->pos, $1, $3, $6);
 	}
 	|
 	EXP BRACKET ']' '=' BRACE EXP_LIST '}' ';'
