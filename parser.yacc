@@ -80,7 +80,6 @@ extern int  yywrap();
 %left OP_MULTIPLY OP_DIV
 %left UMINUS
 %right NOT
-%left IDENTIFIER
 %left PARENTHESIS BRACKET '.'
 %left IF
 %left ELSE
@@ -392,11 +391,6 @@ EXP:
 	EXP '.' IDENTIFIER
 	{
 		$$ = A_ClassVarExp($1->pos, $1, $3, NULL);
-	}
-	|
-	EXP '.' IDENTIFIER BRACKET EXP ']'
-	{
-		$$ = A_ClassVarExp($1->pos, $1, $3, $5);
 	}
 	|
 	INT_CONST
