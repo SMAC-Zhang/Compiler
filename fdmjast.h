@@ -162,7 +162,7 @@ typedef enum {
     A_greater,
     A_ge,
     A_eq,
-    A_neq,
+    A_ne,
     A_plus,
     A_minus,
     A_times,

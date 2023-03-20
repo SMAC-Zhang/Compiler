@@ -383,7 +383,7 @@ EXP:
 	|
 	EXP NEQ EXP
 	{
-		$$ = A_OpExp($1->pos, $1, A_neq, $3);
+		$$ = A_OpExp($1->pos, $1, A_ne, $3);
 	}
 	|
 	EXP BRACKET EXP ']'
