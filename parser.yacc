@@ -254,7 +254,7 @@ STM:
 	|
 	EXP '=' EXP ';'
 	{
-		$$ = A_AssignStm($1->pos, $1, NULL, $3);
+		$$ = A_AssignStm($1->pos, $1, $3);
 	}
 	|
 	EXP BRACKET ']' '=' BRACE EXP_LIST '}' ';'
@@ -390,7 +390,7 @@ EXP:
 	|
 	EXP '.' IDENTIFIER
 	{
-		$$ = A_ClassVarExp($1->pos, $1, $3, NULL);
+		$$ = A_ClassVarExp($1->pos, $1, $3);
 	}
 	|
 	INT_CONST
