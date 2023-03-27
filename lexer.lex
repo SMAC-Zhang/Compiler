@@ -7,7 +7,7 @@
 extern int calc(char*, int);
 int c;
 int line = 1;
-int pos = 0;
+int pos = 1;
 
 %}
 %start COMMENT1 COMMENT2
@@ -16,17 +16,17 @@ int pos = 0;
 
 <INITIAL>"//" { BEGIN COMMENT1; }
 <INITIAL>"/*" { BEGIN COMMENT2; }
-<COMMENT1>"\n" { line++; pos = 0; BEGIN INITIAL; }
+<COMMENT1>"\n" { line++; pos = 1; BEGIN INITIAL; }
 <COMMENT1>"\t" { pos += 4; }
 <COMMENT1>. { pos++; }
-<COMMENT2>"\n" { line++; pos = 0;}
+<COMMENT2>"\n" { line++; pos = 1;}
 <COMMENT2>"\t" { pos += 4; }
 <COMMENT2>. { pos++; }
 <COMMENT2>"*/" { pos++; BEGIN INITIAL; }
 
 <INITIAL>" " { pos++; }
 <INITIAL>"\t" { pos += 4; }
-<INITIAL>"\n" { line++; pos = 0; }
+<INITIAL>"\n" { line++; pos = 1; }
 
 <INITIAL>"+" { yylval.token = A_Pos(line, pos); pos += yyleng; return OP_PLUS; }
 <INITIAL>"*" { yylval.token = A_Pos(line, pos); pos += yyleng; return OP_MULTIPLY; }

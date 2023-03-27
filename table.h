@@ -1,3 +1,5 @@
+#ifndef __TABLE_H
+#define __TABLE_H
 /*
  * table.h - generic hash table
  *
@@ -30,3 +32,4 @@ void *TAB_pop(TAB_table t);
 void TAB_dump(TAB_table t, void (*show)(void *key, void *value));
 
 
+#endif

@@ -1,7 +1,11 @@
+#ifndef __SYMBOL_H
+#define __SYMBOL_H
 /*
  * symbol.h - Symbols and symbol-tables
  *
  */
+
+#include "utils.h"
 
 typedef struct S_symbol_ *S_symbol;
 
@@ -35,3 +39,5 @@ void S_beginScope(S_table t);
    and end the current scope. */
 void S_endScope(S_table t);
 
+
+#endif

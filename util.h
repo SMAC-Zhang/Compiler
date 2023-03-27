@@ -1,4 +1,5 @@
-#include <assert.h>
+#ifndef __UTIL
+#define __UTIL
 
 typedef char *string;
 typedef char bool;
@@ -13,3 +14,4 @@ typedef struct U_boolList_ *U_boolList;
 struct U_boolList_ {bool head; U_boolList tail;};
 U_boolList U_BoolList(bool head, U_boolList tail);
 
+#endif
