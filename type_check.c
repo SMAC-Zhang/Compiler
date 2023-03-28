@@ -505,6 +505,21 @@ static void check_Putarray(FILE* out, S_table t, A_stm s) {
     }
 }
 
+static void check_Return(FILE* out, S_table t, A_stm s) {
+    if (!s || error) {
+        return;
+    }
+    Ty_ty ty = check_Exp(out, t, s->u.e);
+    if (error || ty) {
+        return;
+    }
+    if (ty->kind != Ty_int) {
+        error = TRUE;
+        fprintf(out, "line %d:%d: an int type is expected to return\n", s->u.e->pos->line, s->u.e->pos->pos);        
+        return;
+    }
+}
+
 static void check_Stm(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
@@ -518,7 +533,7 @@ static void check_Stm(FILE* out, S_table t, A_stm s) {
     case A_callStm: check_CallStm(out, t, s); break;
     case A_continue: break;
     case A_break: break;
-    case A_return: break;
+    case A_return: check_Return(out, t, s); break;
     case A_putint: check_Putint(out, t, s); break;
     case A_putarray: check_Putarray(out, t, s); break;
     case A_putch: check_Putch(out, t, s); break;
