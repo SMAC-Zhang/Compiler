@@ -10,40 +10,21 @@
 #include "symbol.h"
 #include "types.h"
 
-static struct Ty_ty_ tynil = {Ty_nil};
-Ty_ty Ty_Nil(void) {return &tynil;}
 
-static struct Ty_ty_ tyint = {Ty_int};
+static struct Ty_ty_ tyint = {Ty_int, FALSE, FALSE};
 Ty_ty Ty_Int(void) {return &tyint;}
 
-static struct Ty_ty_ tystring = {Ty_string};
-Ty_ty Ty_String(void) {return &tystring;}
+static struct Ty_ty_ tyarray = {Ty_array, FALSE, FALSE};
+Ty_ty Ty_Array(void) {return &tyarray;}
 
-static struct Ty_ty_ tyvoid = {Ty_void};
-Ty_ty Ty_Void(void) {return &tyvoid;}
+static struct Ty_ty_ tyloctionint = {Ty_int, TRUE, FALSE};
+Ty_ty Ty_LocationInt(void) {return &tyloctionint;}
 
-Ty_ty Ty_Record(Ty_fieldList fields)
-{Ty_ty p = checked_malloc(sizeof(*p));
- p->kind=Ty_record;
- p->u.record=fields;
- return p;
-}
+static struct Ty_ty_ tyPointerArray = {Ty_array, FALSE, TRUE};
+Ty_ty Ty_PointerArray(void) {return &tyPointerArray;}
 
-Ty_ty Ty_Array(Ty_ty ty)
-{Ty_ty p = checked_malloc(sizeof(*p));
- p->kind=Ty_array;
- p->u.array=ty;
- return p;
-}
-
-Ty_ty Ty_Name(S_symbol sym, Ty_ty ty)
-{Ty_ty p = checked_malloc(sizeof(*p));
- p->kind=Ty_name;
- p->u.name.sym=sym;
- p->u.name.ty=ty;
- return p;
-}
-
+static struct Ty_ty_ tyPointerLocationArray = {Ty_array, TRUE, TRUE};
+Ty_ty Ty_LocationPointerArray(void) {return &tyPointerLocationArray;} 
 
 Ty_tyList Ty_TyList(Ty_ty head, Ty_tyList tail)
 {Ty_tyList p = checked_malloc(sizeof(*p));
@@ -66,30 +47,4 @@ Ty_fieldList Ty_FieldList(Ty_field head, Ty_fieldList tail)
  return p;
 }
 
-/* printing functions - used for debugging */
-static char str_ty[][12] = {
-   "ty_record", "ty_nil", "ty_int", "ty_string", 
-   "ty_array", "ty_name", "ty_void"};
-
-/* This will infinite loop on mutually recursive types */
-void Ty_print(Ty_ty t)
-{
-  if (t == NULL) printf("null");
-  else { printf("%s", str_ty[t->kind]);
-         if (t->kind == Ty_name) {
-	   printf(", %s", S_name(t->u.name.sym)); }
-       }
-}
-
-void TyList_print(Ty_tyList list)
-{
-  if (list == NULL) printf("null");
-  else {
-    printf("TyList( ");
-    Ty_print(list->head);
-    printf(", ");
-    TyList_print(list->tail);
-    printf(")");
-  }
-}
 
