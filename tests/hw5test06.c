@@ -1,5 +1,6 @@
-#include "../fdmj.h"
-#include "../prog1.h"
+#include <stdlib.h>
+#include "fdmjast.h"
+
 A_prog prog1() {
 return
   A_Prog(A_Pos(1,1),

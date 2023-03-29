@@ -243,18 +243,13 @@ static Ty_ty check_Getarray(FILE* out, S_table t, A_exp e) {
     if (error || ty == NULL) {
         return NULL;
     }
-    if (!ty->location) {
+    if (ty->kind != Ty_int) {
         error = TRUE;
-        fprintf(out, "line %d:%d: a location type is expected in getarray()\n", e->u.e->pos->line, e->u.e->pos->pos);        
-        return NULL;
-    }
-    if (ty->kind != Ty_array) {
-        error = TRUE;
-        fprintf(out, "line %d:%d: an array type is expected in getarray()\n", e->u.e->pos->line, e->u.e->pos->pos);        
+        fprintf(out, "line %d:%d: an int type is expected in getarray()\n", e->u.e->pos->line, e->u.e->pos->pos);        
         return NULL;
     }
 
-    return NULL;
+    return Ty_Array();
 }
 
 static Ty_ty check_Exp(FILE* out, S_table t, A_exp e) {

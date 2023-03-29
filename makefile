@@ -8,11 +8,14 @@ testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output2, $(FMJ_TEST
 
 $(TESTCASE_DIR)/%.output1: $(TESTCASE_DIR)/%.c main
 	@echo TEST $*
-	@./main < $< > $@
+	@cp $(TESTCASE_DIR)/$*.c prog1.c
+	@rm prog1.o
+	@make main
+	@./main c > $@
 
 $(TESTCASE_DIR)/%.output2: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
-	@./main < $< > $@
+	@./main fmj < $< > $@
 
 main: main.o prog1.o util.o printast.o fdmjast.o y.tab.o lex.yy.o types.o symbol.o table.o type_check.o
 	@cc -g $^ -o $@
@@ -60,4 +63,4 @@ printast.o: printast.c printast.h fdmjast.h
 	@cc -g -c printast.c
 
 clean: 
-	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.output2
+	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output1 $(TESTCASE_DIR)/*.output2
