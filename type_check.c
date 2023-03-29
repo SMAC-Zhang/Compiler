@@ -72,15 +72,15 @@ static Ty_ty check_ArrayExp(FILE* out, S_table t, A_exp e) {
     if (error || arr == NULL || arr_pos == NULL) {
         return NULL;
     }
-    if (!arr->pointer) {
-        error = TRUE;
-        fprintf(out, "line %d:%d: an pointer type is expected\n", e->u.array_pos.arr->pos->line, e->u.array_pos.arr->pos->pos);        
-        return NULL;        
-    }
     if (arr->kind != Ty_array) {
         error = TRUE;
         fprintf(out, "line %d:%d: an array type is expected\n", e->u.array_pos.arr->pos->line, e->u.array_pos.arr->pos->pos);        
         return NULL;
+    }
+    if (!arr->pointer) {
+        error = TRUE;
+        fprintf(out, "line %d:%d: an pointer type is expected\n", e->u.array_pos.arr->pos->line, e->u.array_pos.arr->pos->pos);        
+        return NULL;        
     }
     if (arr_pos->kind != Ty_int) {
         error = TRUE;
@@ -243,13 +243,18 @@ static Ty_ty check_Getarray(FILE* out, S_table t, A_exp e) {
     if (error || ty == NULL) {
         return NULL;
     }
-    if (ty->kind != Ty_int) {
+    if (ty->kind != Ty_array) {
         error = TRUE;
-        fprintf(out, "line %d:%d: an int type is expected in getarray()\n", e->u.e->pos->line, e->u.e->pos->pos);        
+        fprintf(out, "line %d:%d: an int array is expected in getarray()\n", e->u.e->pos->line, e->u.e->pos->pos);        
+        return NULL;        
+    }
+    if (!ty->pointer) {
+        error = TRUE;
+        fprintf(out, "line %d:%d: an int pointer is expected in getarray()\n", e->u.e->pos->line, e->u.e->pos->pos);        
         return NULL;
     }
 
-    return Ty_Array();
+    return Ty_Int();
 }
 
 static Ty_ty check_Exp(FILE* out, S_table t, A_exp e) {
@@ -409,15 +414,15 @@ static void check_AssignStm(FILE* out, S_table t, A_stm s) {
     }
     if (!arr->location) {
         error = TRUE;
-        fprintf(out, "line %d:%d: a location type is expected in the left of AssignStm\n", s->u.assign.arr->pos->line, s->u.assign.arr->pos->pos);
+        fprintf(out, "line %d:%d: a location type is expected on the left of AssignStm\n", s->u.assign.arr->pos->line, s->u.assign.arr->pos->pos);
         return;        
     }
     if (value->kind != arr->kind) {
         error = TRUE;
         if (arr->kind == Ty_int) {
-            fprintf(out, "line %d:%d: an int type is expected in the right of AssignStm\n", s->u.assign.value->pos->line, s->u.assign.value->pos->pos);
+            fprintf(out, "line %d:%d: an int type is expected on the right of AssignStm\n", s->u.assign.value->pos->line, s->u.assign.value->pos->pos);
         } else if (arr->kind == Ty_array) {
-            fprintf(out, "line %d:%d: an array type is expected in the right of AssignStm\n", s->u.assign.value->pos->line, s->u.assign.value->pos->pos);
+            fprintf(out, "line %d:%d: an array type is expected on the right of AssignStm\n", s->u.assign.value->pos->line, s->u.assign.value->pos->pos);
         }
         return;               
     }
@@ -433,12 +438,12 @@ static void check_ArrayInit(FILE* out, S_table t, A_stm s) {
     }
     if (arr->kind != Ty_array) {
         error = TRUE;
-        fprintf(out, "line %d:%d: an array type is expected in the left of AssignStm\n", s->u.array_init.arr->pos->line, s->u.array_init.arr->pos->pos);
+        fprintf(out, "line %d:%d: an array type is expected on the left of AssignStm\n", s->u.array_init.arr->pos->line, s->u.array_init.arr->pos->pos);
         return;        
     }
     if (!arr->location) {
         error = TRUE;
-        fprintf(out, "line %d:%d: an location type is expected in the left of AssignStm\n", s->u.array_init.arr->pos->line, s->u.array_init.arr->pos->pos);
+        fprintf(out, "line %d:%d: an location type is expected on the left of AssignStm\n", s->u.array_init.arr->pos->line, s->u.array_init.arr->pos->pos);
         return; 
     }
     check_ArrayExpList(out, t, s->u.array_init.init_values);
