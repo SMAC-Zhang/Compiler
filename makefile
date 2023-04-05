@@ -2,18 +2,9 @@ TESTCASE_DIR := tests
 FMJ_TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fmj)
 C_TESTCASES = $(wildcard $(TESTCASE_DIR)/*.c)
 
-testc: $(patsubst $(TESTCASE_DIR)/%.c, $(TESTCASE_DIR)/%.output1, $(C_TESTCASES))
+testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(FMJ_TESTCASES))
 
-testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output2, $(FMJ_TESTCASES))
-
-$(TESTCASE_DIR)/%.output1: $(TESTCASE_DIR)/%.c main
-	@echo TEST $*
-	@cp $(TESTCASE_DIR)/$*.c prog1.c
-	@rm prog1.o
-	@make main
-	@./main c > $@
-
-$(TESTCASE_DIR)/%.output2: $(TESTCASE_DIR)/%.fmj main
+$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
 	@./main fmj < $< > $@
 
@@ -63,4 +54,4 @@ printast.o: printast.c printast.h fdmjast.h
 	@cc -g -c printast.c
 
 clean: 
-	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output1 $(TESTCASE_DIR)/*.output2
+	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output
