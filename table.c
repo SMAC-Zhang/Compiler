@@ -8,16 +8,6 @@
 #include "util.h"
 #include "table.h"
 
-#define TABSIZE 127
-
-typedef struct binder_ *binder;
-struct binder_ {void *key; void *value; binder next; void *prevtop;};
-struct TAB_table_ {
-  binder table[TABSIZE];
-  void *top;
-};
-
-
 static binder Binder(void *key, void *value, binder next, void *prevtop)
 {binder b = checked_malloc(sizeof(*b));
  b->key = key; b->value=value; b->next=next; b->prevtop = prevtop; 
@@ -31,6 +21,8 @@ TAB_table TAB_empty(void)
  t->top = NULL;
  for (i = 0; i < TABSIZE; i++)
    t->table[i] = NULL;
+ t->id = NULL;
+ t->ret = NULL;
  return t;
 }
 
@@ -86,4 +78,14 @@ void TAB_dump(TAB_table t, void (*show)(void *key, void *value)) {
   assert(t->top == b->prevtop && t->table[index]==b->next);
   t->top=k;
   t->table[index]=b;
+}
+
+void TAB_copy(TAB_table t1, TAB_table t2) {
+  for (int i = 0; i < TABSIZE; ++i) {
+    binder b = t1->table[i];
+    while (b) {
+      TAB_enter(t2, b->key, b->value);
+      b = b->next;
+    }
+  }
 }

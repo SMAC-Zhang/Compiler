@@ -1,5 +1,6 @@
 #ifndef __TABLE_H
 #define __TABLE_H
+#define TABSIZE 127
 /*
  * table.h - generic hash table
  *
@@ -9,7 +10,19 @@
  *  well-typed arguments and call the TAB_ functions.
  */
 
+#include "types.h"
+
+typedef struct binder_ *binder;
 typedef struct TAB_table_ *TAB_table;
+
+struct binder_ {void *key; void *value; binder next; void *prevtop;};
+
+struct TAB_table_ {
+  binder table[TABSIZE];
+  void *top;
+  string id;
+  Ty_ty ret;
+};
 
 /* Make a new table mapping "keys" to "values". */
 TAB_table TAB_empty(void);
@@ -31,5 +44,6 @@ void *TAB_pop(TAB_table t);
  *  recent binding of any key to the oldest binding in the table */
 void TAB_dump(TAB_table t, void (*show)(void *key, void *value));
 
+void TAB_copy(TAB_table t1, TAB_table t2);
 
 #endif

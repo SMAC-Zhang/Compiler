@@ -72,3 +72,6 @@ void S_dump(S_table t, void (*show)(S_symbol sym, void *binding)) {
   TAB_dump(t, (void (*)(void *, void *)) show);
 }
 
+void S_copy(S_table t1, S_table t2) {
+  TAB_copy(t1, t2);
+}

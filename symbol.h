@@ -6,6 +6,7 @@
  */
 
 #include "utils.h"
+#include "table.h"
 
 typedef struct S_symbol_ *S_symbol;
 
@@ -39,5 +40,6 @@ void S_beginScope(S_table t);
    and end the current scope. */
 void S_endScope(S_table t);
 
+void S_copy(S_table src, S_table dst);
 
 #endif
