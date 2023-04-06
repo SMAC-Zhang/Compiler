@@ -1,5 +1,7 @@
-#ifndef __UTIL
-#define __UTIL
+#ifndef _UTIL
+#define _UTIL
+
+#include <assert.h>
 
 typedef char *string;
 typedef char bool;

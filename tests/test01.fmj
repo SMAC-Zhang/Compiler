@@ -1,11 +1,9 @@
 public int main() {
-    class c1 c;
-    c=new c1();
-    return c.x;
-}
+    int i=0; 
+    int a; 
 
-public class c5 extends c2 {int x;}
-public class c1 {int x=2;}
-public class c3 {}
-public class c4 extends c3 {}
-public class c2 extends c1 {}
+    a=1; 
+    i=i+1;
+    putint(a);
+    return a;
+}
