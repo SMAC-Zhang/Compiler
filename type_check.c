@@ -943,7 +943,7 @@ static void parse_ClassDecl(FILE* out, S_table t, A_classDecl cd) {
     S_table local = S_empty();
     S_enter(t, S_Symbol(method_str), method);
     S_enter(t, S_Symbol(var_str), var);
-    S_enter(t, S_Symbol(local_str), var);
+    S_enter(t, S_Symbol(local_str), local);
     // 先解析父类
     if (cd->parentID) {
         classNode parent = S_look(inheritTable, S_Symbol(cd->parentID));
