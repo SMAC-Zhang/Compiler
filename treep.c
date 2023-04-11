@@ -4,11 +4,11 @@
 #include "temp.h"
 #include "treep.h"
 
-T_funcDecl T_FuncDecl(string name, Temp_tempList tl, T_stmList sl)
+T_funcDecl T_FuncDecl(string name, Temp_tempList tl, T_stm s)
 {T_funcDecl p = (T_funcDecl) checked_malloc (sizeof *p);
  p->name = name;
  p->args = tl;
- p->stms = sl;
+ p->stm = s;
  return p;
 }
 

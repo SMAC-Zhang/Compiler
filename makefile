@@ -6,9 +6,9 @@ testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(FMJ_TESTC
 
 $(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
-	@./main fmj < $< > $@
+	@./main < $< > $@
 
-main: main.o prog1.o util.o printast.o fdmjast.o y.tab.o lex.yy.o types.o symbol.o table.o type_check.o
+main: main.o prog1.o util.o printast.o fdmjast.o y.tab.o lex.yy.o types.o symbol.o table.o type_check.o treep.o pr_tree_readable.o translate.o temp.o
 	@cc -g $^ -o $@
 
 main.o: main.c prog1.c util.h util.c printast.h printast.c fdmjast.h fdmjast.c y.tab.c y.tab.h types.h types.c symbol.h symbol.c table.h table.c type_check.h type_check.c 
@@ -52,6 +52,18 @@ type_check.o: type_check.c type_check.h util.h symbol.h table.h fdmjast.h types.
 
 printast.o: printast.c printast.h fdmjast.h
 	@cc -g -c printast.c
+
+treep.o: treep.c treep.h util.h symbol.h temp.h fdmjast.h table.h
+	@cc -g -c treep.c
+
+pr_tree_readable.o: pr_tree_readable.c pr_tree_readable.h treep.h util.h temp.h symbol.h table.h
+	@cc -g -c pr_tree_readable.c
+
+translate.o: translate.c translate.h treep.h util.h symbol.h temp.h table.h
+	@cc -g -c translate.c
+
+temp.o: temp.h temp.c table.h symbol.h
+	@cc -g -c temp.c
 
 clean: 
 	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output

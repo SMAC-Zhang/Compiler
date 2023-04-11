@@ -33,7 +33,7 @@ struct T_stmList_ {T_stm head; T_stmList tail;};
 /* A function is a list of temps as arguments, and a list of statements */
 typedef struct T_funcDecl_ *T_funcDecl;
 typedef struct T_funcDeclList_ *T_funcDeclList;
-struct T_funcDecl_ {string name; Temp_tempList args; T_stmList stms;}; 
+struct T_funcDecl_ {string name; Temp_tempList args; T_stm stm;}; 
 struct T_funcDeclList_ {T_funcDecl head; T_funcDeclList tail;};
 
 typedef enum {T_plus, T_minus, T_mul, T_div,
@@ -71,7 +71,7 @@ T_expList T_ExpList (T_exp head, T_expList tail);
 T_stmList T_StmList (T_stm head, T_stmList tail);
 
 T_funcDeclList T_FuncDeclList(T_funcDecl, T_funcDeclList);
-T_funcDecl T_FuncDecl(string, Temp_tempList, T_stmList);
+T_funcDecl T_FuncDecl(string, Temp_tempList, T_stm);
 
 T_stm T_Seq(T_stm left, T_stm right);
 T_stm T_Label(Temp_label);

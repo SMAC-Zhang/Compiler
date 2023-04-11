@@ -12,9 +12,17 @@
 /* local function prototype */
 static void pr_tree_exp(FILE *out, T_exp exp, int d);
 
+int inst=1;
+int eseqlevel=0;
+
 static void indent(FILE *out, int d) {
  int i;
  for (i = 0; i <= d; i++) fprintf(out, " ");
+}
+
+static void indent_dash(FILE *out, int d) {
+ int i;
+ for (i = 0; i <= d; i++) fprintf(out, "-");
 }
 
 static char bin_oper[][12] = {
@@ -28,15 +36,21 @@ static void pr_stm(FILE *out, T_stm stm, int d)
 {
   switch (stm->kind) {
   case T_SEQ:
-    indent(out,d);
+    if (stm->u.SEQ.left->kind!=T_SEQ) {
+      indent_dash(out,eseqlevel);
+      fprintf(out, "[Stm#%d]", inst++); d=1; 
+    } 
+    else indent(out, d);
     fprintf(out, "SEQ(\n"); pr_stm(out, stm->u.SEQ.left,d+1);  fprintf(out, ",\n"); 
+    if (stm->u.SEQ.right && stm->u.SEQ.right->kind!=T_SEQ) 
+          {indent_dash(out, eseqlevel); fprintf(out, "[Stm#%d]", inst++); d=1;}
     pr_stm(out, stm->u.SEQ.right,d+1); fprintf(out, ")");
     break;
   case T_LABEL:
     indent(out,d); fprintf(out, "LABEL %s", S_name(stm->u.LABEL));
     break;
   case T_JUMP:
-    indent(out,d); fprintf(out, "JUMP(\n"); 
+    indent(out,d); fprintf(out, "JUMP("); 
     fprintf(out, " %s)", Temp_labelstring(stm->u.JUMP.jump));
     break;
   case T_CJUMP:
@@ -79,9 +93,14 @@ static void pr_tree_exp(FILE *out, T_exp exp, int d)
 			   Temp_look(Temp_name(), exp->u.TEMP));
     break;
   case T_ESEQ:
-    indent(out,d); fprintf(out, "ESEQ(\n"); pr_stm(out, exp->u.ESEQ.stm,d+1); 
-    fprintf(out, ",\n");
-    pr_tree_exp(out, exp->u.ESEQ.exp,d+1); fprintf(out, ")");
+    eseqlevel++;
+    indent(out,d); fprintf(out, "ESEQ(\n"); 
+    if (exp->u.ESEQ.stm->kind!=T_SEQ) {
+      indent_dash(out, eseqlevel); fprintf(out, "[Stm#%d]", inst++); d=eseqlevel;
+    }
+    pr_stm(out, exp->u.ESEQ.stm,d+1); 
+    fprintf(out, "\n"); pr_tree_exp(out, exp->u.ESEQ.exp,d+1); fprintf(out, ")");
+    eseqlevel--;
     break;
   case T_NAME:
     indent(out,d); fprintf(out, "NAME %s", S_name(exp->u.NAME));
@@ -105,13 +124,15 @@ static void pr_tree_exp(FILE *out, T_exp exp, int d)
     {
     T_expList args = exp->u.ExtCALL.args;
     indent(out,d); 
-     fprintf(out, "T_ExtCALL(%s,\n", exp->u.ExtCALL.extfun); 
+     if (args) fprintf(out, "T_ExtCALL(%s,\n", exp->u.ExtCALL.extfun); 
+     else fprintf(out, "T_ExtCALL(%s", exp->u.ExtCALL.extfun); 
     if (args)
       for (;args; args=args->tail) {
         pr_tree_exp(out, args->head,d+2);
-        if (args->tail) fprintf(out, ", \n");
+        if (args->tail) fprintf(out, ",\n");
       }
 //    indent(out, d+2); fprintf(out, "NULL)");
+      fprintf(out, ")");
     }
     break;
   } /* end of switch */
@@ -143,7 +164,7 @@ void printStmList (FILE *out, T_stmList stmList, int d)
 void printFuncDecl(FILE *out, T_funcDecl funcDecl) 
 {
   Temp_tempList t=funcDecl->args;
-  T_stmList sl=funcDecl->stms;
+  T_stm sl=funcDecl->stm;
 
   fprintf(out, "--A Function---\nFuncDecl(%s,\n", funcDecl->name);
   fprintf(out, "[ARGS:]\n");
@@ -159,11 +180,14 @@ void printFuncDecl(FILE *out, T_funcDecl funcDecl)
 
   fprintf(out, "\n[STMS:]\n");
   if (sl) {
-    printStmList(out, sl, 1);
+   if (sl->kind != T_SEQ) { 
+    indent_dash(out, eseqlevel); fprintf(out, "[Stm#%d]", inst++);
+   }
+    pr_stm(out, sl, 1);
   }
   else 
-    fprintf(out, "NULL\n");
-  fprintf(out, "--End Func-----\n");
+    fprintf(out, "NULL");
+  fprintf(out, "\n--End Func-----\n");
   return;
 }
 
