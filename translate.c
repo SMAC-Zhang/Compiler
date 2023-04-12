@@ -17,17 +17,28 @@ T_exp translate_OpExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool
         temp = T_Temp(Temp_newtemp());    
     }
     // 短路
+    T_exp r = NULL;
+    if (e->u.op.oper == A_and || e->u.op.oper == A_or) {
+        Temp_label t1 = Temp_newlabel();
+        Temp_label f1 = Temp_newlabel();
+        T_exp temp1 = T_Temp(Temp_newtemp());
+        r = T_Eseq(T_Move(temp1, T_Const(1)),
+                    T_Eseq(T_Cjump(T_ne, T_Const(0), right, t1, f1),
+                        T_Eseq(T_Label(f1),
+                            T_Eseq(T_Move((temp1), T_Const(0)),
+                                T_Eseq(T_Label(t1), temp1)))));
+    }
     if (e->u.op.oper == A_and) {
         return T_Eseq(T_Move(temp, T_Const(0)), 
                 T_Eseq(T_Cjump(T_eq, T_Const(0), left, t, f), 
                     T_Eseq(T_Label(f), 
-                        T_Eseq(T_Move(temp, right), 
+                        T_Eseq(T_Move(temp, r),
                             T_Eseq(T_Label(t), temp)))));
     } else if (e->u.op.oper == A_or) {
         return T_Eseq(T_Move(temp, T_Const(1)), 
                     T_Eseq(T_Cjump(T_ne, T_Const(0), left, t, f), 
                         T_Eseq(T_Label(f),
-                            T_Eseq(T_Move(temp, right),
+                            T_Eseq(T_Move(temp, r),
                                 T_Eseq(T_Label(t), temp)))));
     }
     // 普通二元运算符
@@ -135,7 +146,7 @@ T_exp translate_MinusExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, b
     }
     T_exp t = T_Temp(Temp_newtemp());
     T_exp exp = translate_Exp(out, e->u.e, begin, end, loop);
-    T_exp minus = T_Binop(T_minus, 0, exp);
+    T_exp minus = T_Binop(T_minus, T_Const(0), exp);
     return T_Eseq(T_Move(t, minus), t);
 }
 
@@ -145,6 +156,9 @@ T_exp translate_EscExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, boo
     }
     T_stm stm = translate_StmList(out, e->u.escExp.ns, begin, end, loop);
     T_exp exp = translate_Exp(out, e->u.escExp.exp, begin, end, loop);
+    if (stm == NULL) {
+        return exp;
+    }
     return T_Eseq(stm, exp);
 }
 
