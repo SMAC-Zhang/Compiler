@@ -1,3 +1,4 @@
+#include <string.h>
 #include "type_check.h"
 #include "symbol.h"
 #include "types.h"

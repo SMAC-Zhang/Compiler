@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "translate.h"
 #include "temp.h"
 #include "symbol.h"
