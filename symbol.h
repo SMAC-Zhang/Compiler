@@ -5,7 +5,7 @@
  *
  */
 
-#include "utils.h"
+#include "util.h"
 #include "table.h"
 
 typedef struct S_symbol_ *S_symbol;
