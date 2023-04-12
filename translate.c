@@ -29,11 +29,12 @@ static patchList joinPatch(patchList first, patchList second) {
     if (!first) {
         return second;
     }
+    patchList head = first;
     while (first->tail) {
         first = first->tail;
     }
     first->tail = second;
-    return first;
+    return head;
 }
 
 struct Cx {
@@ -118,9 +119,9 @@ static struct Cx unCx(Tr_exp e) {
 	switch(e->kind) {
     case Tr_ex: {
         struct Cx cx;
-        cx.stm = T_Cjump(T_eq, e->u.ex, T_Const(0), NULL, NULL);
-        cx.trues = PatchList(&(cx.stm->u.CJUMP.false), NULL);
-        cx.falses = PatchList(&(cx.stm->u.CJUMP.true), NULL);
+        cx.stm = T_Cjump(T_ne, e->u.ex, T_Const(0), NULL, NULL);
+        cx.trues = PatchList(&(cx.stm->u.CJUMP.true), NULL);
+        cx.falses = PatchList(&(cx.stm->u.CJUMP.false), NULL);
         return cx;
     }
     case Tr_nx: {
@@ -129,7 +130,6 @@ static struct Cx unCx(Tr_exp e) {
     }
     case Tr_cx: return e->u.cx;
 	}
-
 }
 
 Tr_exp translate_OpExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
@@ -166,16 +166,14 @@ Tr_exp translate_OpExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, boo
         Temp_label t = Temp_newlabel();
         doPatch(leftC.trues, t);
         cond = T_Seq(leftC.stm, T_Seq(T_Label(t), rightC.stm)); 
-        trues = PatchList(&cond->u.SEQ.right->u.SEQ.right->u.CJUMP.true, NULL);
-        falses = PatchList(&cond->u.SEQ.left->u.CJUMP.false, 
-                    PatchList(&cond->u.SEQ.right->u.SEQ.right->u.CJUMP.false, NULL));
+        trues = rightC.trues;
+        falses = joinPatch(leftC.falses, rightC.falses);
     } else if (e->u.op.oper == A_or) {
         Temp_label f = Temp_newlabel();
         doPatch(leftC.falses, f);
         cond = T_Seq(leftC.stm, T_Seq(T_Label(f), rightC.stm));
-        trues = PatchList(&cond->u.SEQ.left->u.CJUMP.true, 
-                    PatchList(&cond->u.SEQ.right->u.SEQ.right->u.CJUMP.true, NULL));
-        falses = PatchList(&cond->u.SEQ.right->u.SEQ.right->u.CJUMP.false, NULL);
+        trues = joinPatch(leftC.trues, rightC.trues);
+        falses = rightC.falses;
     } else {
         fprintf(out, "UNKNOWN OP kind\n");
         exit(1);
@@ -231,10 +229,8 @@ Tr_exp translate_MinusExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, 
     if (!e) {
         return NULL;
     }
-    T_exp t = T_Temp(Temp_newtemp());
     Tr_exp exp = translate_Exp(out, e->u.e, begin, end, loop);
-    T_exp minus = T_Binop(T_minus, T_Const(0), unEx(exp));
-    return Tr_Ex(T_Eseq(T_Move(t, minus), t));
+    return Tr_Ex(T_Binop(T_minus, T_Const(0), unEx(exp)));
 }
 
 Tr_exp translate_EscExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
@@ -293,6 +289,9 @@ Tr_exp translate_Exp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool 
 Tr_exp translate_NestedStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
     if (!s) {
         return NULL;
+    }
+    if (s->u.ns == NULL) {
+        return Tr_Nx(T_Exp(T_Const(0)));
     }
     return translate_StmList(out, s->u.ns, begin, end, loop);
 }
