@@ -731,6 +731,11 @@ static void check_FormalList(FILE* out, S_table t, A_formalList fl) {
     }
     case A_intArrType: ty = Ty_LocationPointerArray(); break;
     }
+    if (S_look(t, S_Symbol(fl->head->id)) != NULL) {
+        error = TRUE;
+        fprintf(out, "line %d:%d: '%s' variable redefinition\n", fl->head->pos->line, fl->head->pos->pos, fl->head->id);
+        return;
+    } 
     S_enter(t, S_Symbol(fl->head->id), ty);
 
     if (fl->tail) {
