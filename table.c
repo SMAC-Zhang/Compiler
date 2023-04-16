@@ -21,8 +21,6 @@ TAB_table TAB_empty(void)
  t->top = NULL;
  for (i = 0; i < TABSIZE; i++)
    t->table[i] = NULL;
- t->id = NULL;
- t->ret = NULL;
  return t;
 }
 

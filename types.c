@@ -33,14 +33,9 @@ Ty_ty Ty_Class(string id) {
     ty->id = id;
 }
 
-Ty_ty Ty_Method(string id, Ty_tyList fl, Ty_ty ret) {
-    Ty_ty ty = checked_malloc(sizeof(struct Ty_ty_));
-    ty->kind = Ty_method;
-    ty->location = FALSE;
-    ty->pointer = FALSE;
-    ty->id = id;
-    ty->fl = fl;
-    ty->ret = ret;
+Ty_tyList Ty_TyList(Ty_ty head, Ty_tyList tail) {
+    Ty_tyList tl = checked_malloc(sizeof(* tl));
+    tl->head = head;
+    tl->tail = tail;
+    return tl;
 }
-
-

@@ -20,8 +20,6 @@ struct binder_ {void *key; void *value; binder next; void *prevtop;};
 struct TAB_table_ {
   binder table[TABSIZE];
   void *top;
-  string id;
-  Ty_ty ret;
 };
 
 /* Make a new table mapping "keys" to "values". */
