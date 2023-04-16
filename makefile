@@ -66,4 +66,4 @@ temp.o: temp.h temp.c table.h symbol.h
 	@cc -g -c temp.c
 
 clean: 
-	rm -f *.o main lex.yy.c y.tab.c y.tab.h y.output lib.ll $(TESTCASE_DIR)/*.output
+	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output
