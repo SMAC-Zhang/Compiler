@@ -3,6 +3,7 @@
 #include "temp.h"
 #include "symbol.h"
 
+// 记录变量名和temp的映射关系
 static S_table tempTable;
 
 // patch 和 Cx
@@ -132,9 +133,44 @@ static struct Cx unCx(Tr_exp e) {
 	}
 }
 
-Tr_exp translate_OpExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
-    Tr_exp left = translate_Exp(out, e->u.op.left, begin, end, loop);
-    Tr_exp right = translate_Exp(out, e->u.op.right, begin, end, loop);
+// jumpStack
+typedef struct jumpLabel {
+    Temp_label begin;
+    Temp_label end;
+} jumpLabel;
+
+typedef struct jumpStack {
+    jumpLabel* jl;
+    struct jumpStack* next;
+} jumpStack;
+static jumpStack* js;
+
+static void push_stack(Temp_label begin, Temp_label end) {
+    jumpLabel* jl = checked_malloc(sizeof *jl);
+    jl->begin = begin;
+    jl->end = end;
+    jumpStack* local_js = checked_malloc(sizeof *local_js);
+    local_js->jl = jl;
+    local_js->next = js;
+    js = local_js;
+}
+
+static void pop_stack() {
+    if (js == NULL) {
+        fprintf(stderr, "jumpStack Error!\n");
+        exit(1);
+    }
+    js = js->next;
+}
+
+static bool stack_empty() {
+    return js == NULL;
+}
+
+// translate
+Tr_exp translate_OpExp(FILE* out, A_exp e) {
+    Tr_exp left = translate_Exp(out, e->u.op.left);
+    Tr_exp right = translate_Exp(out, e->u.op.right);
     // 普通二元运算符:
     switch (e->u.op.oper) {
     case A_plus: return Tr_Ex(T_Binop(T_plus, unEx(left), unEx(right)));
@@ -199,11 +235,11 @@ Tr_exp translate_NumConst(FILE* out, A_exp e) {
     return Tr_Ex(T_Const(e->u.num));
 }
 
-Tr_exp translate_LengthExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_LengthExp(FILE* out, A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp exp = translate_Exp(out, e->u.e, begin, end, loop);
+    Tr_exp exp = translate_Exp(out, e->u.e);
     return Tr_Ex(T_ExtCall(String("length"), T_ExpList(unEx(exp), NULL)));
 }
 
@@ -214,31 +250,31 @@ Tr_exp translate_IdExp(FILE* out, A_exp e) {
     return Tr_Ex(T_Temp(S_look(tempTable, S_Symbol(e->u.v))));
 }
 
-Tr_exp translate_NotExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_NotExp(FILE* out, A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp exp = translate_Exp(out, e->u.e, begin, end, loop);
+    Tr_exp exp = translate_Exp(out, e->u.e);
     T_stm cond = T_Cjump(T_eq, unEx(exp), T_Const(0), NULL, NULL);
 	patchList trues = PatchList(&cond->u.CJUMP.true, NULL);
 	patchList falses = PatchList(&cond->u.CJUMP.false, NULL);
 	return Tr_Cx(trues, falses, cond);
 }
 
-Tr_exp translate_MinusExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_MinusExp(FILE* out, A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp exp = translate_Exp(out, e->u.e, begin, end, loop);
+    Tr_exp exp = translate_Exp(out, e->u.e);
     return Tr_Ex(T_Binop(T_minus, T_Const(0), unEx(exp)));
 }
 
-Tr_exp translate_EscExp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_EscExp(FILE* out, A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp stm = translate_StmList(out, e->u.escExp.ns, begin, end, loop);
-    Tr_exp exp = translate_Exp(out, e->u.escExp.exp, begin, end, loop);
+    Tr_exp stm = translate_StmList(out, e->u.escExp.ns);
+    Tr_exp exp = translate_Exp(out, e->u.escExp.exp);
     if (stm == NULL) {
         return exp;
     }
@@ -259,25 +295,25 @@ Tr_exp translate_Getch(FILE* out, A_exp e) {
     return Tr_Ex(T_ExtCall(String("getch"), NULL));
 }
 
-Tr_exp translate_Exp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_Exp(FILE* out, A_exp e) {
     if (!e) {
         return NULL;
     }
     switch (e->kind) {
-    case A_opExp: return translate_OpExp(out, e, begin, end, loop);
+    case A_opExp: return translate_OpExp(out, e);
     case A_arrayExp: break;
     case A_callExp: break;
     case A_classVarExp: break;
     case A_boolConst: return translate_BoolConst(out, e);
     case A_numConst: return translate_NumConst(out, e);
-    case A_lengthExp: return translate_LengthExp(out, e, begin, end, loop);
+    case A_lengthExp: return translate_LengthExp(out, e);
     case A_idExp: return translate_IdExp(out, e);
     case A_thisExp: break;
     case A_newIntArrExp: break;
     case A_newObjExp: break;
-    case A_notExp: return translate_NotExp(out, e, begin, end, loop);
-    case A_minusExp: return translate_MinusExp(out, e, begin, end, loop);
-    case A_escExp: return translate_EscExp(out, e, begin, end, loop);
+    case A_notExp: return translate_NotExp(out, e);
+    case A_minusExp: return translate_MinusExp(out, e);
+    case A_escExp: return translate_EscExp(out, e);
     case A_getint: return translate_Getint(out, e);
     case A_getch: return translate_Getch(out, e);
     case A_getarray: break;
@@ -286,28 +322,28 @@ Tr_exp translate_Exp(FILE* out, A_exp e, Temp_label begin, Temp_label end, bool 
     return NULL;
 }
 
-Tr_exp translate_NestedStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_NestedStm(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
     if (s->u.ns == NULL) {
         return Tr_Nx(T_Exp(T_Const(0)));
     }
-    return translate_StmList(out, s->u.ns, begin, end, loop);
+    return translate_StmList(out, s->u.ns);
 }
 
-Tr_exp translate_IfStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_IfStm(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
     Temp_label t = Temp_newlabel();
     Temp_label f = Temp_newlabel();
-    struct Cx condition = unCx(translate_Exp(out, s->u.if_stat.e, begin, end, loop));
+    struct Cx condition = unCx(translate_Exp(out, s->u.if_stat.e));
     doPatch(condition.trues, t);
 	doPatch(condition.falses, f);
     if (s->u.if_stat.s2) {
-        T_stm s1 = unNx(translate_Stm(out, s->u.if_stat.s1, begin, end, loop));
-        T_stm s2 = unNx(translate_Stm(out, s->u.if_stat.s2, begin, end, loop));
+        T_stm s1 = unNx(translate_Stm(out, s->u.if_stat.s1));
+        T_stm s2 = unNx(translate_Stm(out, s->u.if_stat.s2));
         Temp_label e = Temp_newlabel();
         return Tr_Nx(T_Seq(condition.stm, 
                     T_Seq(T_Label(t), 
@@ -317,7 +353,7 @@ Tr_exp translate_IfStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, boo
                                     T_Seq(s2,
                                         T_Label(e)))))))); 
     } else {
-        T_stm s1 = unNx(translate_Stm(out, s->u.if_stat.s1, begin, end, loop));
+        T_stm s1 = unNx(translate_Stm(out, s->u.if_stat.s1));
         return  Tr_Nx(T_Seq(condition.stm,
                     T_Seq(T_Label(t),
                         T_Seq(s1,
@@ -325,18 +361,20 @@ Tr_exp translate_IfStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, boo
     }
 }
 
-Tr_exp translate_WhileStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_WhileStm(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
-    struct Cx condition = unCx(translate_Exp(out, s->u.while_stat.e, begin, end, loop));
+    struct Cx condition = unCx(translate_Exp(out, s->u.while_stat.e));
     Temp_label t = Temp_newlabel();
     Temp_label f = Temp_newlabel();
     doPatch(condition.trues, t);
     doPatch(condition.falses, f);
     if (s->u.while_stat.s) {
         Temp_label b = Temp_newlabel();
-        T_stm stm = unNx(translate_Stm(out, s->u.while_stat.s, b, f, TRUE));
+        push_stack(b, f);
+        T_stm stm = unNx(translate_Stm(out, s->u.while_stat.s));
+        pop_stack();
         return Tr_Nx(T_Seq(T_Label(b),
                     T_Seq(condition.stm,
                         T_Seq(T_Label(t),
@@ -350,59 +388,59 @@ Tr_exp translate_WhileStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, 
     }
 }
 
-Tr_exp translate_AssignStm(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_AssignStm(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
-    Tr_exp arr = translate_Exp(out, s->u.assign.arr, begin, end, loop);
-    Tr_exp val = translate_Exp(out, s->u.assign.value, begin, end, loop);
+    Tr_exp arr = translate_Exp(out, s->u.assign.arr);
+    Tr_exp val = translate_Exp(out, s->u.assign.value);
     return Tr_Nx(T_Move(unEx(arr), unEx(val)));
 }
 
-Tr_exp translate_Continue(FILE* out, A_stm s, Temp_label begin, bool loop) {
+Tr_exp translate_Continue(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
-    if (!loop) {
+    if (stack_empty()) {
         fprintf(out, "line: %d:%d: continue is not in WhileStm!\n", s->pos->line, s->pos->pos);
         fflush(out);
         exit(1);
     }
-    return Tr_Nx(T_Jump(begin));
+    return Tr_Nx(T_Jump(js->jl->begin));
 }
 
-Tr_exp translate_Break(FILE* out, A_stm s, Temp_label end, bool loop) {
+Tr_exp translate_Break(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
-    if (!loop) {
+    if (stack_empty()) {
         fprintf(out, "line: %d:%d: break is not in WhileStm!\n", s->pos->line, s->pos->pos);
         fflush(out);
         exit(1);
     }
-    return Tr_Nx(T_Jump(end));
+    return Tr_Nx(T_Jump(js->jl->end));
 }
 
-Tr_exp translate_Return(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_Return(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
-    T_exp ret = unEx(translate_Exp(out, s->u.e, begin, end, loop));
+    T_exp ret = unEx(translate_Exp(out, s->u.e));
     return Tr_Nx(T_Return(ret));
 }
 
-Tr_exp translate_Putint(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_Putint(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
-    return Tr_Nx(T_Exp(T_ExtCall(String("putint"), T_ExpList(unEx(translate_Exp(out, s->u.e, begin, end, loop)), NULL))));
+    return Tr_Nx(T_Exp(T_ExtCall(String("putint"), T_ExpList(unEx(translate_Exp(out, s->u.e)), NULL))));
 }
 
-Tr_exp translate_Putch(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_Putch(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
-    return Tr_Nx(T_Exp(T_ExtCall(String("putch"), T_ExpList(unEx(translate_Exp(out, s->u.e, begin, end, loop)), NULL))));
+    return Tr_Nx(T_Exp(T_ExtCall(String("putch"), T_ExpList(unEx(translate_Exp(out, s->u.e)), NULL))));
 }
 
 Tr_exp translate_Starttime(FILE* out, A_stm s) {
@@ -419,23 +457,23 @@ Tr_exp translate_Stoptime(FILE* out, A_stm s) {
     return Tr_Nx(T_Exp(T_ExtCall(String("stoptime"), NULL)));
 }
 
-Tr_exp translate_Stm(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_Stm(FILE* out, A_stm s) {
     if (!s) {
         return NULL;
     }
     switch (s->kind) {
-    case A_nestedStm: return translate_NestedStm(out, s, begin, end, loop);
-    case A_ifStm: return translate_IfStm(out, s, begin, end, loop);
-    case A_whileStm: return translate_WhileStm(out, s, begin, end, loop);
-    case A_assignStm: return translate_AssignStm(out, s, begin, end, loop);
+    case A_nestedStm: return translate_NestedStm(out, s);
+    case A_ifStm: return translate_IfStm(out, s);
+    case A_whileStm: return translate_WhileStm(out, s);
+    case A_assignStm: return translate_AssignStm(out, s);
     case A_arrayInit: break;
     case A_callStm: break;
-    case A_continue: return translate_Continue(out, s, begin, loop);
-    case A_break: return translate_Break(out, s, end, loop);
-    case A_return: return translate_Return(out, s, begin, end, loop);
-    case A_putint: return translate_Putint(out, s, begin, end, loop);
+    case A_continue: return translate_Continue(out, s);
+    case A_break: return translate_Break(out, s);
+    case A_return: return translate_Return(out, s);
+    case A_putint: return translate_Putint(out, s);
     case A_putarray: break;
-    case A_putch: return translate_Putch(out, s, begin, end, loop);
+    case A_putch: return translate_Putch(out, s);
     case A_starttime: return translate_Starttime(out, s);
     case A_stoptime: return translate_Stoptime(out, s);
     default: fprintf(out, "Unknown statement kind!"); fflush(out); exit(1);
@@ -443,14 +481,14 @@ Tr_exp translate_Stm(FILE* out, A_stm s, Temp_label begin, Temp_label end, bool 
     return NULL;
 }
 
-Tr_exp translate_StmList(FILE* out, A_stmList sl, Temp_label begin, Temp_label end, bool loop) {
+Tr_exp translate_StmList(FILE* out, A_stmList sl) {
     if (!sl) {
         return NULL;
     }
-    Tr_exp left = translate_Stm(out, sl->head, begin, end, loop);
+    Tr_exp left = translate_Stm(out, sl->head);
     Tr_exp right = NULL;
     if (sl->tail) {
-        right = translate_StmList(out, sl->tail, begin, end, loop);
+        right = translate_StmList(out, sl->tail);
     }
     if (!left && !right) {
         return NULL;
@@ -501,7 +539,7 @@ T_funcDecl translate_MainMethod(FILE* out, A_mainMethod main) {
         left = translate_VarDeclList(out, main->vdl);
     }
     if (main->sl) {
-        right = translate_StmList(out, main->sl, NULL, NULL, FALSE);
+        right = translate_StmList(out, main->sl);
     }
 
     T_stm s = NULL;

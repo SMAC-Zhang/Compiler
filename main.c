@@ -2,7 +2,7 @@
 
 #include "printast.h"
 #include "y.tab.h"
-#include "type_check.h"
+#include "semantic.h"
 #include "translate.h"
 #include "pr_tree_readable.h"
 

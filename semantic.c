@@ -1,5 +1,5 @@
 #include <string.h>
-#include "type_check.h"
+#include "semantic.h"
 #include "symbol.h"
 #include "types.h"
 
@@ -26,54 +26,7 @@ classNode ClassNode(A_classDecl base, A_classDecl fa, int vis) {
     return node;
 }
 
-static Ty_ty check_OpExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_ArrayExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_CallExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_ClassVarExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_BoolConst(FILE* out, S_table t, A_exp e);
-static Ty_ty check_NumConst(FILE* out, S_table t, A_exp e);
-static Ty_ty check_LengthExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_IdExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_ThisExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_NewIntArrExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_NewObjExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_NotExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_MinusExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_EscExp(FILE* out, S_table t, A_exp e);
-static Ty_ty check_Getint(FILE* out, S_table t, A_exp e);
-static Ty_ty check_Getch(FILE* out, S_table t, A_exp e);
-static Ty_ty check_Getarray(FILE* out, S_table t, A_exp e);
-static Ty_ty check_Exp(FILE* out, S_table t, A_exp e);
-static bool check_FuncExpList(FILE* out, S_table t, A_expList el, Ty_tyList fl);
-static void check_ArrayExpList(FILE* out, S_table t, A_expList el);
-static void check_VarDecl(FILE* out, S_table t, A_varDecl vd);
-static void check_VarDeclList(FILE* out, S_table t, A_varDeclList vdl);
-static void check_NestedStm(FILE* out, S_table t, A_stm s);
-static void check_IfStm(FILE* out, S_table t, A_stm s);
-static void check_WhileStm(FILE* out, S_table t, A_stm s);
-static void check_AssignStm(FILE* out, S_table t, A_stm s);
-static void check_ArrayInit(FILE* out, S_table t, A_stm s);
-static void check_CallStm(FILE* out, S_table t, A_stm s);
-static void check_Putint(FILE* out, S_table t, A_stm s);
-static void check_Putch(FILE* out, S_table t, A_stm s);
-static void check_Putarray(FILE* out, S_table t, A_stm s);
-static void check_Stm(FILE* out, S_table t, A_stm s);
-static void check_StmList(FILE* out, S_table t, A_stmList sl);
-static void check_MainMethod(FILE* out, S_table t, A_mainMethod main);
-// class
-static void check_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl);
-static void check_MethodDecl(FILE* out, S_table t, A_methodDecl md);
-static void check_MethodDeclList(FILE* out, S_table t, A_methodDeclList mdl);
-static void check_MethodDeclList_wrap(FILE* out, S_table t, A_methodDeclList mdl);
-static void parse_ClassDecl(FILE* out, S_table t, A_classDecl cd);
-static void parse_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl);
-static void parse_ClassDeclListWithExtends(FILE* out, S_table t, A_classDeclList cdl);
-static Ty_tyList Ty_TyList(FILE* out, A_formalList fl);
-static bool check_Class(Ty_ty fa, Ty_ty son);
-static void check_FormalList(FILE* out, S_table t, A_formalList fl);
-
-
-static Ty_ty check_OpExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_OpExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -95,7 +48,7 @@ static Ty_ty check_OpExp(FILE* out, S_table t, A_exp e) {
     return Ty_Int();
 }
 
-static Ty_ty check_ArrayExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_ArrayExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -122,7 +75,7 @@ static Ty_ty check_ArrayExp(FILE* out, S_table t, A_exp e) {
     return Ty_LocationInt();
 }
 
-static Ty_ty check_CallExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_CallExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -151,7 +104,7 @@ static Ty_ty check_CallExp(FILE* out, S_table t, A_exp e) {
     return fun->ret;
 }
 
-static Ty_ty check_ClassVarExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_ClassVarExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -175,21 +128,21 @@ static Ty_ty check_ClassVarExp(FILE* out, S_table t, A_exp e) {
     return ty;
 }
 
-static Ty_ty check_BoolConst(FILE* out, S_table t, A_exp e) {
+Ty_ty check_BoolConst(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
     return Ty_Int();
 }
 
-static Ty_ty check_NumConst(FILE* out, S_table t, A_exp e) {
+Ty_ty check_NumConst(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
     return Ty_Int();
 }
 
-static Ty_ty check_LengthExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_LengthExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -205,7 +158,7 @@ static Ty_ty check_LengthExp(FILE* out, S_table t, A_exp e) {
     return Ty_Int();
 }
 
-static Ty_ty check_IdExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_IdExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -219,7 +172,7 @@ static Ty_ty check_IdExp(FILE* out, S_table t, A_exp e) {
     return ty;
 }
 
-static Ty_ty check_ThisExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_ThisExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -231,7 +184,7 @@ static Ty_ty check_ThisExp(FILE* out, S_table t, A_exp e) {
     return Ty_Class(t->id);
 }
 
-static Ty_ty check_NewIntArrExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_NewIntArrExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -244,7 +197,7 @@ static Ty_ty check_NewIntArrExp(FILE* out, S_table t, A_exp e) {
     return Ty_PointerArray();
 }
 
-static Ty_ty check_NewObjExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_NewObjExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -256,7 +209,7 @@ static Ty_ty check_NewObjExp(FILE* out, S_table t, A_exp e) {
     return Ty_Class(e->u.v);
 }
 
-static Ty_ty check_NotExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_NotExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -272,7 +225,7 @@ static Ty_ty check_NotExp(FILE* out, S_table t, A_exp e) {
     return Ty_Int();
 }
 
-static Ty_ty check_MinusExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_MinusExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -288,7 +241,7 @@ static Ty_ty check_MinusExp(FILE* out, S_table t, A_exp e) {
     return Ty_Int();
 }
 
-static Ty_ty check_EscExp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_EscExp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -303,21 +256,21 @@ static Ty_ty check_EscExp(FILE* out, S_table t, A_exp e) {
     return ty;
 }
 
-static Ty_ty check_Getint(FILE* out, S_table t, A_exp e) {
+Ty_ty check_Getint(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
     return Ty_Int();
 }
 
-static Ty_ty check_Getch(FILE* out, S_table t, A_exp e) {
+Ty_ty check_Getch(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
     return Ty_Int();
 }
 
-static Ty_ty check_Getarray(FILE* out, S_table t, A_exp e) {
+Ty_ty check_Getarray(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -339,7 +292,7 @@ static Ty_ty check_Getarray(FILE* out, S_table t, A_exp e) {
     return Ty_Int();
 }
 
-static Ty_ty check_Exp(FILE* out, S_table t, A_exp e) {
+Ty_ty check_Exp(FILE* out, S_table t, A_exp e) {
     if (!e || error) {
         return NULL;
     }
@@ -365,7 +318,7 @@ static Ty_ty check_Exp(FILE* out, S_table t, A_exp e) {
     }
 }
 
-static bool check_Class(Ty_ty fa, Ty_ty son) {
+bool check_Class(Ty_ty fa, Ty_ty son) {
     while (strcmp(son->id, fa->id)) {
         classNode node = S_look(inheritTable, S_Symbol(son->id));
         if (node == NULL) {
@@ -380,7 +333,7 @@ static bool check_Class(Ty_ty fa, Ty_ty son) {
     return TRUE;
 }
 
-static bool check_FuncExpList(FILE* out, S_table t, A_expList el, Ty_tyList fl) {
+bool check_FuncExpList(FILE* out, S_table t, A_expList el, Ty_tyList fl) {
     if (!el && !fl) {
         return TRUE;
     } else if (!el || !fl) {
@@ -400,7 +353,7 @@ static bool check_FuncExpList(FILE* out, S_table t, A_expList el, Ty_tyList fl) 
     return check_FuncExpList(out, t, el->tail, fl->tail);
 }
 
-static void check_ArrayExpList(FILE* out, S_table t, A_expList el) {
+void check_ArrayExpList(FILE* out, S_table t, A_expList el) {
     if (!el || error) {
         return;
     }
@@ -418,7 +371,7 @@ static void check_ArrayExpList(FILE* out, S_table t, A_expList el) {
     }
 }
 
-static void check_VarDecl(FILE* out, S_table t, A_varDecl vd) {
+void check_VarDecl(FILE* out, S_table t, A_varDecl vd) {
     if (!vd || error) {
         return;
     }
@@ -464,7 +417,7 @@ static void check_VarDecl(FILE* out, S_table t, A_varDecl vd) {
     }
 }
 
-static void check_VarDeclList(FILE* out, S_table t, A_varDeclList vdl) {
+void check_VarDeclList(FILE* out, S_table t, A_varDeclList vdl) {
     if (!vdl || error) {
         return;
     }
@@ -474,14 +427,14 @@ static void check_VarDeclList(FILE* out, S_table t, A_varDeclList vdl) {
     }
 }
 
-static void check_NestedStm(FILE* out, S_table t, A_stm s) {
+void check_NestedStm(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
     check_StmList(out, t, s->u.ns);
 }
 
-static void check_IfStm(FILE* out, S_table t, A_stm s) {
+void check_IfStm(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -500,7 +453,7 @@ static void check_IfStm(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_WhileStm(FILE* out, S_table t, A_stm s) {
+void check_WhileStm(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -518,7 +471,7 @@ static void check_WhileStm(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_AssignStm(FILE* out, S_table t, A_stm s) {
+void check_AssignStm(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -547,7 +500,7 @@ static void check_AssignStm(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_ArrayInit(FILE* out, S_table t, A_stm s) {
+void check_ArrayInit(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -568,7 +521,7 @@ static void check_ArrayInit(FILE* out, S_table t, A_stm s) {
     check_ArrayExpList(out, t, s->u.array_init.init_values);
 }
 
-static void check_CallStm(FILE* out, S_table t, A_stm s) {
+void check_CallStm(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -597,7 +550,7 @@ static void check_CallStm(FILE* out, S_table t, A_stm s) {
     return;
 }
 
-static void check_Putint(FILE* out, S_table t, A_stm s) {
+void check_Putint(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -612,7 +565,7 @@ static void check_Putint(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_Putch(FILE* out, S_table t, A_stm s) {
+void check_Putch(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -627,7 +580,7 @@ static void check_Putch(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_Putarray(FILE* out, S_table t, A_stm s) {
+void check_Putarray(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -648,7 +601,7 @@ static void check_Putarray(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_Return(FILE* out, S_table t, A_stm s) {
+void check_Return(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -668,7 +621,7 @@ static void check_Return(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_Stm(FILE* out, S_table t, A_stm s) {
+void check_Stm(FILE* out, S_table t, A_stm s) {
     if (!s || error) {
         return;
     }
@@ -691,7 +644,7 @@ static void check_Stm(FILE* out, S_table t, A_stm s) {
     }
 }
 
-static void check_StmList(FILE* out, S_table t, A_stmList sl) {
+void check_StmList(FILE* out, S_table t, A_stmList sl) {
     if (!sl || error) {
         return;
     }
@@ -701,7 +654,7 @@ static void check_StmList(FILE* out, S_table t, A_stmList sl) {
     }
 }
 
-static void check_MainMethod(FILE* out, S_table t, A_mainMethod main) {
+void check_MainMethod(FILE* out, S_table t, A_mainMethod main) {
     S_table local = S_empty();
     S_enter(t, S_Symbol(local_str), local);
     local->ret = Ty_Int();
@@ -713,7 +666,7 @@ static void check_MainMethod(FILE* out, S_table t, A_mainMethod main) {
     }
 }
 
-static void check_FormalList(FILE* out, S_table t, A_formalList fl) {
+void check_FormalList(FILE* out, S_table t, A_formalList fl) {
     if (!fl || error) {
         return;
     }
@@ -738,7 +691,7 @@ static void check_FormalList(FILE* out, S_table t, A_formalList fl) {
     }
 }
 
-static void check_MethodDecl(FILE* out, S_table t, A_methodDecl md) {
+void check_MethodDecl(FILE* out, S_table t, A_methodDecl md) {
     if (!md || error) {
         return;
     }
@@ -759,7 +712,7 @@ static void check_MethodDecl(FILE* out, S_table t, A_methodDecl md) {
     S_endScope(local);
 }
 
-static void check_MethodDeclList(FILE* out, S_table t, A_methodDeclList mdl) {
+void check_MethodDeclList(FILE* out, S_table t, A_methodDeclList mdl) {
     if (!mdl || error) {
         return;
     }
@@ -769,7 +722,7 @@ static void check_MethodDeclList(FILE* out, S_table t, A_methodDeclList mdl) {
     }
 }
 
-static Ty_tyList Ty_TyList(FILE* out, A_formalList fl) {
+Ty_tyList Ty_TyList(FILE* out, A_formalList fl) {
     if (!fl || error) {
         return NULL;
     }
@@ -796,7 +749,7 @@ static Ty_tyList Ty_TyList(FILE* out, A_formalList fl) {
     return p;
 }
 
-static bool check_TyList(Ty_tyList ty1, Ty_tyList ty2) {
+bool check_TyList(Ty_tyList ty1, Ty_tyList ty2) {
     if (!ty1 && !ty2) {
         return TRUE;
     } else if (!ty1 || !ty2) {
@@ -811,7 +764,7 @@ static bool check_TyList(Ty_tyList ty1, Ty_tyList ty2) {
     return check_TyList(ty1->tail, ty2->tail);
 }
 
-static void check_MethodDeclList_wrap(FILE* out, S_table t, A_methodDeclList mdl) {
+void check_MethodDeclList_wrap(FILE* out, S_table t, A_methodDeclList mdl) {
     // 先遍历一遍获得方法签名
     if (!mdl || error) {
         return;
@@ -871,7 +824,7 @@ static void check_MethodDeclList_wrap(FILE* out, S_table t, A_methodDeclList mdl
     check_MethodDeclList(out, t, mdl);
 }
 
-static void parse_ClassDeclListWithExtends(FILE* out, S_table t, A_classDeclList cdl) {
+void parse_ClassDeclListWithExtends(FILE* out, S_table t, A_classDeclList cdl) {
     if (!cdl || error) {
         return;
     }
@@ -928,7 +881,7 @@ static void parse_ClassDeclListWithExtends(FILE* out, S_table t, A_classDeclList
     }
 }
 
-static void parse_ClassDecl(FILE* out, S_table t, A_classDecl cd) {
+void parse_ClassDecl(FILE* out, S_table t, A_classDecl cd) {
     if (!cd || error) {
         return;
     }
@@ -962,7 +915,7 @@ static void parse_ClassDecl(FILE* out, S_table t, A_classDecl cd) {
     check_MethodDeclList_wrap(out, t, cd->mdl);
 }
 
-static void parse_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl) {
+void parse_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl) {
     if (!cdl || error) {
         return;
     }
@@ -972,7 +925,7 @@ static void parse_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl) {
     }
 }
 
-static void check_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl) {
+void check_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl) {
     if (!cdl || error) {
         return;
     }
