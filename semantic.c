@@ -4,7 +4,7 @@
 #include "types.h"
 
 static bool error;
-static S_table classTable;
+S_table classTable;
 static S_table inheritTable;
 
 typedef struct classNode_ {
@@ -24,19 +24,36 @@ classNode ClassNode(A_classDecl base, A_classDecl fa, int vis) {
 
 classEntry ClassEntry(string id) {
     classEntry ce = checked_malloc(sizeof *ce);
+    memset(ce, 0, sizeof *ce);
     ce->methodTable = S_empty();
     ce->varTable = S_empty();
     ce->id = id;
+    ce->var_offset = 0;
+    ce->method_offset = 0;
     return ce;
 }
 
-methodEntry MethodEntry(classEntry ce, Ty_ty ret, Ty_tyList fl) {
+methodEntry MethodEntry(classEntry ce, classEntry from, Ty_ty ret, Ty_tyList fl, A_methodDecl md, int offset) {
     methodEntry me = checked_malloc(sizeof *me);
+    memset(me, 0, sizeof *me);
     me->localTable = S_empty();
+    me->tempTable = S_empty();
     me->ce = ce;
+    me->from = from;
     me->ret = ret;
     me->fl = fl;
+    me->offset = offset;
+    me->md = md;
     return me;
+}
+
+varEntry VarEntry(Ty_ty ty, A_varDecl vd, int offset) {
+    varEntry ve = checked_malloc(sizeof *ve);
+    memset(ve, 0, sizeof *ve);
+    ve->ty = ty;
+    ve->vd = vd;
+    ve->offset = offset;
+    return ve;
 }
 
 static bool check_Class(Ty_ty fa, Ty_ty son) {
@@ -87,6 +104,51 @@ static bool check_TyList(Ty_tyList ty1, Ty_tyList ty2) {
     }
 
     return check_TyList(ty1->tail, ty2->tail);
+}
+
+static void check_ArrayExpList(FILE* out, methodEntry me, A_expList el) {
+    if (!el || error) {
+        return;
+    }
+    Ty_ty ty = check_Exp(out, me, el->head);
+    if (error) {
+        return;
+    }
+    if (ty != NULL && ty->kind != Ty_int) {
+        error = TRUE;
+        fprintf(out, "line %d:%d: an int type is expected in array initialization list\n", el->head->pos->line, el->head->pos->pos);        
+        return;
+    }
+    if (el->tail) {
+        check_ArrayExpList(out, me, el->tail);
+    }
+}
+
+static Ty_tyList Fl_To_Ty_TyList(FILE* out, A_formalList fl) {
+    if (!fl || error) {
+        return NULL;
+    }
+    Ty_tyList p = checked_malloc(sizeof(*p));
+    switch (fl->head->t->t) {
+    case A_intType: p->head = Ty_Int(); break;
+    case A_intArrType: p->head = Ty_Array(); break;
+    case A_idType: {
+        p->head = Ty_Class(fl->head->t->id); 
+        if (S_look(classTable, S_Symbol(fl->head->t->id)) == NULL) {
+            error = TRUE;
+            fprintf(out, "line %d:%d: class '%s' is not defined\n", fl->head->pos->line, fl->head->pos->pos, fl->head->t->id);
+            return NULL;
+        }
+        break;
+    }
+    default: break;
+    }
+
+    p->tail = NULL;
+    if (fl->tail) {
+        p->tail = Fl_To_Ty_TyList(out, fl->tail);
+    }
+    return p;
 }
 
 Ty_ty check_OpExp(FILE* out, methodEntry me, A_exp e) {
@@ -182,7 +244,7 @@ Ty_ty check_ClassVarExp(FILE* out, methodEntry me, A_exp e) {
     }
     classEntry ce = (classEntry)S_look(classTable, S_Symbol(obj->id));
     S_table varTable = ce->varTable;
-    Ty_ty ty = S_look(varTable, S_Symbol(e->u.classvar.var));
+    Ty_ty ty = ((varEntry)S_look(varTable, S_Symbol(e->u.classvar.var)))->ty;
     if (ty == NULL) {
         error = TRUE;
         fprintf(out, "line %d:%d: variable '%s' is not in class '%s'\n", e->pos->line, e->pos->pos, e->u.classvar.var, obj->id);
@@ -226,13 +288,13 @@ Ty_ty check_IdExp(FILE* out, methodEntry me, A_exp e) {
         return NULL;
     }
     S_table localTable = me->localTable;
-    Ty_ty ty = (Ty_ty)S_look(localTable, S_Symbol(e->u.v));
-    if (ty == NULL) {
+    varEntry ve = (varEntry)S_look(localTable, S_Symbol(e->u.v));
+    if (ve == NULL) {
         error = TRUE;
         fprintf(out, "line: %d:%d: variable '%s' is not defined\n", e->pos->line, e->pos->pos, e->u.v);
         return NULL;
     }
-    return ty;
+    return ve->ty;
 }
 
 Ty_ty check_ThisExp(FILE* out, methodEntry me, A_exp e) {
@@ -381,25 +443,7 @@ Ty_ty check_Exp(FILE* out, methodEntry me, A_exp e) {
     }
 }
 
-static void check_ArrayExpList(FILE* out, methodEntry me, A_expList el) {
-    if (!el || error) {
-        return;
-    }
-    Ty_ty ty = check_Exp(out, me, el->head);
-    if (error) {
-        return;
-    }
-    if (ty != NULL && ty->kind != Ty_int) {
-        error = TRUE;
-        fprintf(out, "line %d:%d: an int type is expected in array initialization list\n", el->head->pos->line, el->head->pos->pos);        
-        return;
-    }
-    if (el->tail) {
-        check_ArrayExpList(out, me, el->tail);
-    }
-}
-
-void check_VarDecl(FILE* out, methodEntry me, S_table t, A_varDecl vd) {
+void check_VarDecl(FILE* out, methodEntry me, S_table t, A_varDecl vd, int offset) {
     if (!vd || error) {
         return;
     }
@@ -410,17 +454,17 @@ void check_VarDecl(FILE* out, methodEntry me, S_table t, A_varDecl vd) {
     }
     // declare
     switch (vd->t->t) {
-    case A_intType: S_enter(t, S_Symbol(vd->v), Ty_LocationInt()); break;
+    case A_intType: S_enter(t, S_Symbol(vd->v), VarEntry(Ty_LocationInt(), vd, offset)); break;
     case A_idType: {
         if (S_look(classTable, S_Symbol(vd->t->id)) == NULL) {
             error = TRUE;
             fprintf(out, "line %d:%d: class '%s' is not defined\n", vd->pos->line, vd->pos->pos, vd->t->id);
             return;
         }
-        S_enter(t, S_Symbol(vd->v), Ty_Class(vd->t->id)); 
+        S_enter(t, S_Symbol(vd->v), VarEntry(Ty_Class(vd->t->id), vd, offset)); 
         break;
     }
-    case A_intArrType: S_enter(t, S_Symbol(vd->v), Ty_LocationPointerArray()); break;
+    case A_intArrType: S_enter(t, S_Symbol(vd->v), VarEntry(Ty_LocationPointerArray(), vd, offset)); break;
     }
     
     // definition
@@ -445,13 +489,17 @@ void check_VarDecl(FILE* out, methodEntry me, S_table t, A_varDecl vd) {
     }
 }
 
-void check_VarDeclList(FILE* out, methodEntry me, S_table t, A_varDeclList vdl) {
+void check_VarDeclList(FILE* out, methodEntry me, classEntry ce, S_table t, A_varDeclList vdl, int offset) {
     if (!vdl || error) {
         return;
     }
-    check_VarDecl(out, me, t, vdl->head);
+    check_VarDecl(out, me, t, vdl->head, offset);
     if (vdl->tail) {
-        check_VarDeclList(out, me, t, vdl->tail);
+        check_VarDeclList(out, me, ce, t, vdl->tail, offset + 1);
+    } else {
+        if (ce) {
+            ce->var_offset = offset + 1;
+        }
     }
 }
 
@@ -683,7 +731,7 @@ void check_StmList(FILE* out, methodEntry me, A_stmList sl) {
 
 void check_MainMethod(FILE* out, methodEntry me, A_mainMethod main) {
     if (main->vdl) {
-        check_VarDeclList(out, me, me->localTable, main->vdl);
+        check_VarDeclList(out, me, NULL, me->localTable, main->vdl, 0);
     }
     if (main->sl) {
         check_StmList(out, me, main->sl);
@@ -713,7 +761,7 @@ void check_FormalList(FILE* out, S_table t, A_formalList fl) {
         fprintf(out, "line %d:%d: '%s' variable redefinition\n", fl->head->pos->line, fl->head->pos->pos, fl->head->id);
         return;
     } 
-    S_enter(t, S_Symbol(fl->head->id), ty);
+    S_enter(t, S_Symbol(fl->head->id), VarEntry(ty, NULL, 0));
 
     if (fl->tail) {
         check_FormalList(out, t, fl->tail);
@@ -729,7 +777,7 @@ void check_MethodDecl(FILE* out, S_table t, A_methodDecl md) {
         check_FormalList(out, me->localTable, md->fl);
     }
     if (md->vdl) {
-        check_VarDeclList(out, me, me->localTable, md->vdl);
+        check_VarDeclList(out, me, NULL, me->localTable, md->vdl, 0);
     }
     if (md->sl) {
         check_StmList(out, me, md->sl);
@@ -744,33 +792,6 @@ void check_MethodDeclList(FILE* out, S_table t, A_methodDeclList mdl) {
     if (mdl->tail) {
         check_MethodDeclList(out, t, mdl->tail);
     }
-}
-
-static Ty_tyList Fl_To_Ty_TyList(FILE* out, A_formalList fl) {
-    if (!fl || error) {
-        return NULL;
-    }
-    Ty_tyList p = checked_malloc(sizeof(*p));
-    switch (fl->head->t->t) {
-    case A_intType: p->head = Ty_Int(); break;
-    case A_intArrType: p->head = Ty_Array(); break;
-    case A_idType: {
-        p->head = Ty_Class(fl->head->t->id); 
-        if (S_look(classTable, S_Symbol(fl->head->t->id)) == NULL) {
-            error = TRUE;
-            fprintf(out, "line %d:%d: class '%s' is not defined\n", fl->head->pos->line, fl->head->pos->pos, fl->head->t->id);
-            return NULL;
-        }
-        break;
-    }
-    default: break;
-    }
-
-    p->tail = NULL;
-    if (fl->tail) {
-        p->tail = Fl_To_Ty_TyList(out, fl->tail);
-    }
-    return p;
 }
 
 void check_MethodDeclList_wrap(FILE* out, classEntry ce, A_methodDeclList mdl) {
@@ -803,7 +824,7 @@ void check_MethodDeclList_wrap(FILE* out, classEntry ce, A_methodDeclList mdl) {
             return;
         }
 
-        methodEntry new_method = MethodEntry(ce, ret, fl);
+        methodEntry new_method = MethodEntry(ce, ce, ret, fl, md, ce->method_offset++);
         methodEntry old_method = (methodEntry)S_look(methodTable, S_Symbol(md->id));
         // 继承
         if (old_method != NULL) {
@@ -815,6 +836,8 @@ void check_MethodDeclList_wrap(FILE* out, classEntry ce, A_methodDeclList mdl) {
             if (check_TyList(old_method->fl, new_method->fl) == FALSE) {
                 error = TRUE;
             }
+            new_method->offset = old_method->offset;
+            ce->method_offset--;
         }
         if (error) {
             fprintf(out, "line %d:%d: illegal override\n", md->pos->line, md->pos->pos);
@@ -848,7 +871,7 @@ void parse_ClassDeclListWithExtends(FILE* out, S_table t, A_classDeclList cdl) {
         }
         classEntry class = ClassEntry(cd->id);
         S_enter(t, S_Symbol(cd->id), class);
-        S_enter(inheritTable, S_Symbol(cd->id), ClassNode(cd, NULL, 0)); 
+        S_enter(inheritTable, S_Symbol(cd->id), ClassNode(cd, NULL, 0));
         cdl = cdl->tail;
     }
 
@@ -909,10 +932,24 @@ void parse_ClassDecl(FILE* out, classEntry ce, A_classDecl cd) {
         }
         // 复制父类的表
         S_copy(parentCe->methodTable, ce->methodTable);
-        S_copy(parentCe->varTable, ce->varTable);    
+        S_copy(parentCe->varTable, ce->varTable);
+        ce->var_offset = parentCe->var_offset;
+        ce->method_offset = parentCe->method_offset;
     }
     // 再解析自身
-    check_VarDeclList(out, NULL, ce->varTable, cd->vdl);
+    int diff = ce->var_offset;
+    check_VarDeclList(out, NULL, ce, ce->varTable, cd->vdl, ce->var_offset);
+    diff = ce->var_offset - diff;
+    // 修改继承的methodEntry
+    for (int i = 0; i < TABSIZE; ++i) {
+        binder b = ce->methodTable->table[i];
+        while (b) {
+            ((methodEntry)b->value)->ce = ce;
+            ((methodEntry)b->value)->offset += diff;
+            b = b->next;
+        }
+    }
+    ce->method_offset += diff;
     check_MethodDeclList_wrap(out, ce, cd->mdl);
 }
 
@@ -939,7 +976,7 @@ void check_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl) {
 
 void check_Prog(FILE* out, A_prog p) {
     classTable = S_empty();
-    methodEntry mainMethodEntry = MethodEntry(NULL, Ty_Int(), Ty_TyList(NULL, NULL));
+    methodEntry mainMethodEntry = MethodEntry(NULL, NULL, Ty_Int(), Ty_TyList(NULL, NULL), NULL, 0);
     inheritTable = S_empty();
     if (p->cdl) {
         check_ClassDeclList(out, classTable, p->cdl);

@@ -2,9 +2,10 @@
 #include "translate.h"
 #include "temp.h"
 #include "symbol.h"
+#include "semantic.h"
 
-// 记录变量名和temp的映射关系
-static S_table tempTable;
+static int byte_length = 4; // 4 Bytes
+extern S_table classTable;
 
 // patch 和 Cx
 typedef struct patchList_ *patchList;
@@ -139,38 +140,164 @@ typedef struct jumpLabel {
     Temp_label end;
 } jumpLabel;
 
-typedef struct jumpStack {
+typedef struct CallStack {
     jumpLabel* jl;
-    struct jumpStack* next;
-} jumpStack;
-static jumpStack* js;
+    struct CallStack* next;
+} CallStack;
+static CallStack* cs;
 
 static void push_stack(Temp_label begin, Temp_label end) {
     jumpLabel* jl = checked_malloc(sizeof *jl);
     jl->begin = begin;
     jl->end = end;
-    jumpStack* local_js = checked_malloc(sizeof *local_js);
-    local_js->jl = jl;
-    local_js->next = js;
-    js = local_js;
+    CallStack* local_cs = checked_malloc(sizeof *local_cs);
+    local_cs->jl = jl;
+    local_cs->next = cs;
+    cs = local_cs;
 }
 
 static void pop_stack() {
-    if (js == NULL) {
+    if (cs == NULL) {
         fprintf(stderr, "jumpStack Error!\n");
         exit(1);
     }
-    js = js->next;
+    cs = cs->next;
 }
 
 static bool stack_empty() {
-    return js == NULL;
+    return cs == NULL;
 }
 
+static bool loop_stack() {
+    if (cs != NULL) {
+        if (cs->jl->begin == NULL) {
+            return FALSE;
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static Tr_exp translate_ArrayExpList(FILE* out, methodEntry me, A_expList el, T_exp t) {
+    int len = 0;
+    A_expList head = el;
+    while (head) {
+        head = head->tail;
+        len++;
+    }
+    head = el;
+    T_stm s = T_Seq(
+        T_Move(t, 
+            T_Binop(T_plus,
+                T_ExtCall(String("malloc"), 
+                    T_ExpList(
+                        T_Binop(T_mul, T_Const(len + 1), T_Const(byte_length)),
+                            NULL)), 
+                T_Binop(T_mul, T_Const(1), T_Const(byte_length)))), NULL);
+    T_stm h = s;
+    T_stm off = T_Move(
+        T_Mem(
+            T_Binop(T_plus, t, T_Binop(T_mul, T_Const(-1), T_Const(byte_length)))
+        ),
+        T_Const(len)
+    );
+    if (len != 0) {
+        h->u.SEQ.right = T_Seq(off, NULL);
+        h = h->u.SEQ.right;
+    } else {
+        h->u.SEQ.right = off;
+    }
+
+    for (int i = 0; i < len; ++i, el = el->tail) {
+        Tr_exp e = translate_Exp(out, me, el->head);
+        T_stm left = T_Move(
+            T_Mem(
+                T_Binop(T_plus, t, T_Binop(T_mul, T_Const(i), T_Const(byte_length)))
+            ), 
+            unEx(e)
+        );
+        if (i == len - 1) {
+            h->u.SEQ.right = left;
+        } else {
+            h->u.SEQ.right = T_Seq(left, NULL);
+            h = h->u.SEQ.right;
+        }
+    }
+    return Tr_Nx(s);
+}
+
+static T_expList transform_ExpList(FILE* out, methodEntry me, A_expList el) {
+    if (!el) {
+        return NULL;
+    }
+    T_exp head = unEx(translate_Exp(out, me, el->head));
+    T_expList tail = NULL;
+    if (el->tail) {
+        tail = transform_ExpList(out, me, el->tail);
+    }
+    return T_ExpList(head, tail);
+}
+
+static char** get_offset(int num, classEntry ce) {
+    char** ret = (char**)malloc(num * sizeof(char*));
+    S_table varTable = ce->varTable;
+    S_table methodTable = ce->methodTable;
+    for (int i = 0; i < TABSIZE; ++i) {
+        binder b = varTable->table[i];
+        while (b) {
+            varEntry ve = (varEntry)(b->value);
+            ret[ve->offset] = ve->vd->v;
+            b = b->next;
+        }
+    }
+    for (int i = 0; i < TABSIZE; ++i) {
+        binder b = methodTable->table[i];
+        while (b) {
+            methodEntry me = (methodEntry)(b->value);
+            ret[me->offset] = me->md->id;
+            b = b->next;
+        }
+    }
+    return ret;
+}
+
+static T_stm new_obj_VarDecl(FILE* out, methodEntry me, A_varDecl vd, T_exp mem) {
+    if (!vd) {
+        return NULL;
+    }
+    if (vd->elist) {
+        if (vd->t->t == A_intType) {
+            return T_Move(mem, T_Const(vd->elist->head->u.num));
+        } else if (vd->t->t == A_intArrType) {
+            Temp_temp t = Temp_newtemp();
+            return T_Move(mem, 
+                T_Eseq(unNx(translate_ArrayExpList(out, me, vd->elist, T_Temp(t))), 
+                        T_Temp(t)));
+        }
+    }
+    return NULL;
+}
+
+static T_funcDeclList joinFuncDeclList(T_funcDeclList first, T_funcDeclList second) {
+    if (!first) {
+        return second;
+    }
+    T_funcDeclList head = first;
+    while (first->tail) {
+        first = first->tail;
+    }
+    first->tail = second;
+    return head;
+}
+
+
 // translate
-Tr_exp translate_OpExp(FILE* out, A_exp e) {
-    Tr_exp left = translate_Exp(out, e->u.op.left);
-    Tr_exp right = translate_Exp(out, e->u.op.right);
+Tr_exp translate_OpExp(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    Tr_exp left = translate_Exp(out, me, e->u.op.left);
+    Tr_exp right = translate_Exp(out, me, e->u.op.right);
     // 普通二元运算符:
     switch (e->u.op.oper) {
     case A_plus: return Tr_Ex(T_Binop(T_plus, unEx(left), unEx(right)));
@@ -217,7 +344,121 @@ Tr_exp translate_OpExp(FILE* out, A_exp e) {
     return Tr_Cx(trues, falses, cond);
 }
 
-Tr_exp translate_BoolConst(FILE* out, A_exp e) {
+Tr_exp translate_ArrayExp(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    Tr_exp arr = translate_Exp(out, me, e->u.array_pos.arr);
+    Tr_exp arr_pos = translate_Exp(out, me, e->u.array_pos.arr_pos);
+    return Tr_Ex(T_Mem(T_Binop(T_plus, unEx(arr), 
+        T_Binop(T_mul, unEx(arr_pos), T_Const(byte_length)))));
+}
+
+Tr_exp translate_CallExp(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    Ty_ty ty = check_Exp(out, me, e->u.call.obj);
+    classEntry ce = (classEntry)S_look(classTable, S_Symbol(ty->id));
+    methodEntry localme = (methodEntry)S_look(ce->methodTable, S_Symbol(e->u.call.fun));
+    Tr_exp obj = translate_Exp(out, me, e->u.call.obj);
+    Temp_temp t = Temp_newtemp();
+    return Tr_Ex(
+        T_Eseq(T_Move(T_Temp(t), unEx(obj)),
+            T_Call(e->u.call.fun, 
+                T_Binop(T_plus, T_Temp(t), T_Binop(T_mul, T_Const(localme->offset), T_Const(byte_length))),
+                T_ExpList(T_Temp(t), transform_ExpList(out, me, e->u.call.el)))));
+}
+
+Tr_exp translate_ClassVarExp(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    Ty_ty ty = check_Exp(out, me, e->u.classvar.obj);
+    classEntry ce = (classEntry)S_look(classTable, S_Symbol(ty->id));
+    Tr_exp obj = translate_Exp(out, me, e->u.classvar.obj);
+    int offset = ((varEntry)S_look(ce->varTable, S_Symbol(e->u.classvar.var)))->offset;
+    return Tr_Ex(T_Mem(
+                T_Binop(T_plus, unEx(obj), T_Binop(T_mul, T_Const(offset), T_Const(byte_length)))));
+}
+
+Tr_exp translate_ThisExp(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    return Tr_Ex(T_Temp(me->this));
+}
+
+Tr_exp translate_NewIntArrExp(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    Temp_temp t = Temp_newtemp();
+    Tr_exp exp = translate_Exp(out, me, e);
+
+    return Tr_Ex(
+        T_Eseq(T_Seq(
+            T_Move(T_Temp(t),
+                T_Binop(T_plus, 
+                    T_ExtCall(String("malloc"), 
+                    T_ExpList(T_Binop(T_mul, 
+                        T_Binop(T_plus, unEx(exp), T_Const(1)), 
+                        T_Const(byte_length)), NULL)), 
+                    T_Const(1))), 
+            T_Move(T_Mem(T_Binop(T_plus, T_Temp(t), T_Const(1))),
+                    unEx(exp))),
+        T_Temp(t)));
+}
+
+Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    // 申请空间
+    Temp_temp t = Temp_newtemp();
+    classEntry ce = (classEntry)S_look(classTable, S_Symbol(e->u.v));
+    T_stm s = T_Move(T_Temp(t), 
+                T_ExtCall(String("malloc"), 
+                T_ExpList(T_Binop(T_mul, T_Const(ce->method_offset), T_Const(byte_length)), NULL)));
+    char** off = get_offset(ce->method_offset, ce);
+    T_stm ret = T_Seq(s, NULL);
+    T_stm head = ret;
+    // 填充空间
+    for (int i = 0; i < ce->method_offset; ++i) {
+        if (i < ce->var_offset) {
+            varEntry ve = (varEntry)S_look(ce->varTable, S_Symbol(off[i]));
+            T_exp mem = T_Mem(T_Binop(T_plus, T_Temp(t), 
+                                T_Binop(T_mul, T_Const(i), T_Const(byte_length))));
+            T_stm s = new_obj_VarDecl(out, me, ve->vd, mem);
+            if (s != NULL) {
+                if (i == ce->method_offset - 1) {
+                    head->u.SEQ.right = s;                
+                } else {
+                    T_stm seq = T_Seq(s, NULL);
+                    head->u.SEQ.right = seq;
+                    head = head->u.SEQ.right;
+                }
+            }
+        } else {
+            methodEntry me = (methodEntry)S_look(ce->methodTable, S_Symbol(off[i]));
+            T_exp mem = T_Mem(T_Binop(T_plus, T_Temp(t), 
+                                T_Binop(T_mul, T_Const(i), T_Const(byte_length))));
+            char* id = (char*)malloc(strlen(me->from->id) + strlen(me->md->id) + 2);
+            sprintf(id, "%s%c%s", me->from->id, '_', me->md->id);
+            T_stm s = T_Move(mem, T_Name(Temp_namedlabel(id)));
+            if (i == ce->method_offset - 1) {
+                head->u.SEQ.right = s;                
+            } else {
+                T_stm seq = T_Seq(s, NULL);
+                head->u.SEQ.right = seq;
+                head = head->u.SEQ.right;
+            }
+        }
+    }
+    return Tr_Ex(T_Eseq(ret, T_Temp(t)));
+}
+
+Tr_exp translate_BoolConst(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
@@ -228,122 +469,136 @@ Tr_exp translate_BoolConst(FILE* out, A_exp e) {
     }
 }
 
-Tr_exp translate_NumConst(FILE* out, A_exp e) {
+Tr_exp translate_NumConst(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
     return Tr_Ex(T_Const(e->u.num));
 }
 
-Tr_exp translate_LengthExp(FILE* out, A_exp e) {
+Tr_exp translate_LengthExp(FILE* out,methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp exp = translate_Exp(out, e->u.e);
-    return Tr_Ex(T_ExtCall(String("length"), T_ExpList(unEx(exp), NULL)));
+    T_exp exp = unEx(translate_Exp(out, me, e->u.e));
+    return Tr_Ex(T_Mem(T_Binop(T_plus, exp, T_Binop(T_mul, T_Const(-1), T_Const(byte_length)))));
 }
 
-Tr_exp translate_IdExp(FILE* out, A_exp e) {
+Tr_exp translate_IdExp(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
-    return Tr_Ex(T_Temp(S_look(tempTable, S_Symbol(e->u.v))));
+    return Tr_Ex(T_Temp(S_look(me->tempTable, S_Symbol(e->u.v))));
 }
 
-Tr_exp translate_NotExp(FILE* out, A_exp e) {
+Tr_exp translate_NotExp(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp exp = translate_Exp(out, e->u.e);
+    Tr_exp exp = translate_Exp(out, me, e->u.e);
     T_stm cond = T_Cjump(T_eq, unEx(exp), T_Const(0), NULL, NULL);
 	patchList trues = PatchList(&cond->u.CJUMP.true, NULL);
 	patchList falses = PatchList(&cond->u.CJUMP.false, NULL);
 	return Tr_Cx(trues, falses, cond);
 }
 
-Tr_exp translate_MinusExp(FILE* out, A_exp e) {
+Tr_exp translate_MinusExp(FILE* out, methodEntry me,  A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp exp = translate_Exp(out, e->u.e);
+    Tr_exp exp = translate_Exp(out, me, e->u.e);
     return Tr_Ex(T_Binop(T_minus, T_Const(0), unEx(exp)));
 }
 
-Tr_exp translate_EscExp(FILE* out, A_exp e) {
+Tr_exp translate_EscExp(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
-    Tr_exp stm = translate_StmList(out, e->u.escExp.ns);
-    Tr_exp exp = translate_Exp(out, e->u.escExp.exp);
+    Tr_exp stm = translate_StmList(out, me, e->u.escExp.ns);
+    Tr_exp exp = translate_Exp(out, me, e->u.escExp.exp);
     if (stm == NULL) {
         return exp;
     }
     return Tr_Ex(T_Eseq(unNx(stm), unEx(exp)));
 }
 
-Tr_exp translate_Getint(FILE* out, A_exp e) {
+Tr_exp translate_Getint(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
     return Tr_Ex(T_ExtCall(String("getint"), NULL));
 }
 
-Tr_exp translate_Getch(FILE* out, A_exp e) {
+Tr_exp translate_Getch(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
     return Tr_Ex(T_ExtCall(String("getch"), NULL));
 }
 
-Tr_exp translate_Exp(FILE* out, A_exp e) {
+Tr_exp translate_Getarray(FILE* out, methodEntry me, A_exp e) {
+    if (!e) {
+        return NULL;
+    }
+    Tr_exp exp = translate_Exp(out, me, e->u.e);
+    return Tr_Ex(T_ExtCall(String("getarray"), T_ExpList(unEx(exp), NULL)));
+}
+
+Tr_exp translate_Exp(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
     }
     switch (e->kind) {
-    case A_opExp: return translate_OpExp(out, e);
-    case A_arrayExp: break;
-    case A_callExp: break;
-    case A_classVarExp: break;
-    case A_boolConst: return translate_BoolConst(out, e);
-    case A_numConst: return translate_NumConst(out, e);
-    case A_lengthExp: return translate_LengthExp(out, e);
-    case A_idExp: return translate_IdExp(out, e);
-    case A_thisExp: break;
-    case A_newIntArrExp: break;
-    case A_newObjExp: break;
-    case A_notExp: return translate_NotExp(out, e);
-    case A_minusExp: return translate_MinusExp(out, e);
-    case A_escExp: return translate_EscExp(out, e);
-    case A_getint: return translate_Getint(out, e);
-    case A_getch: return translate_Getch(out, e);
-    case A_getarray: break;
+    case A_opExp: return translate_OpExp(out, me, e);
+    case A_arrayExp: return translate_ArrayExp(out, me, e);
+    case A_callExp: return translate_CallExp(out, me, e);
+    case A_classVarExp: return translate_ClassVarExp(out, me, e);
+    case A_boolConst: return translate_BoolConst(out, me, e);
+    case A_numConst: return translate_NumConst(out, me, e);
+    case A_lengthExp: return translate_LengthExp(out, me, e);
+    case A_idExp: return translate_IdExp(out, me, e);
+    case A_thisExp: return translate_ThisExp(out, me, e);
+    case A_newIntArrExp: return translate_NewIntArrExp(out, me, e);
+    case A_newObjExp: return translate_NewObjExp(out, me, e);
+    case A_notExp: return translate_NotExp(out, me, e);
+    case A_minusExp: return translate_MinusExp(out, me, e);
+    case A_escExp: return translate_EscExp(out, me, e);
+    case A_getint: return translate_Getint(out, me, e);
+    case A_getch: return translate_Getch(out, me, e);
+    case A_getarray: return translate_Getarray(out, me, e);
     default: fprintf(out, "Unknown expression kind!\n"); fflush(out); exit(1);
     }
     return NULL;
 }
 
-Tr_exp translate_NestedStm(FILE* out, A_stm s) {
+Tr_exp translate_NestedStm(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
     if (s->u.ns == NULL) {
         return Tr_Nx(T_Exp(T_Const(0)));
     }
-    return translate_StmList(out, s->u.ns);
+    return translate_StmList(out, me, s->u.ns);
 }
 
-Tr_exp translate_IfStm(FILE* out, A_stm s) {
+Tr_exp translate_IfStm(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
     Temp_label t = Temp_newlabel();
     Temp_label f = Temp_newlabel();
-    struct Cx condition = unCx(translate_Exp(out, s->u.if_stat.e));
+    struct Cx condition = unCx(translate_Exp(out, me, s->u.if_stat.e));
     doPatch(condition.trues, t);
 	doPatch(condition.falses, f);
-    if (s->u.if_stat.s2) {
-        T_stm s1 = unNx(translate_Stm(out, s->u.if_stat.s1));
-        T_stm s2 = unNx(translate_Stm(out, s->u.if_stat.s2));
+    if (!s->u.if_stat.s2) {
+        T_stm s1 = unNx(translate_Stm(out, me, s->u.if_stat.s1));
+        return  Tr_Nx(T_Seq(condition.stm,
+                    T_Seq(T_Label(t),
+                        T_Seq(s1,
+                            T_Label(f)))));
+    } else {
+        T_stm s1 = unNx(translate_Stm(out, me, s->u.if_stat.s1));
+        T_stm s2 = unNx(translate_Stm(out, me, s->u.if_stat.s2));
         Temp_label e = Temp_newlabel();
         return Tr_Nx(T_Seq(condition.stm, 
                     T_Seq(T_Label(t), 
@@ -352,28 +607,26 @@ Tr_exp translate_IfStm(FILE* out, A_stm s) {
                                 T_Seq(T_Label(f),
                                     T_Seq(s2,
                                         T_Label(e)))))))); 
-    } else {
-        T_stm s1 = unNx(translate_Stm(out, s->u.if_stat.s1));
-        return  Tr_Nx(T_Seq(condition.stm,
-                    T_Seq(T_Label(t),
-                        T_Seq(s1,
-                            T_Label(f)))));
     }
 }
 
-Tr_exp translate_WhileStm(FILE* out, A_stm s) {
+Tr_exp translate_WhileStm(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
-    struct Cx condition = unCx(translate_Exp(out, s->u.while_stat.e));
+    struct Cx condition = unCx(translate_Exp(out, me, s->u.while_stat.e));
     Temp_label t = Temp_newlabel();
     Temp_label f = Temp_newlabel();
     doPatch(condition.trues, t);
     doPatch(condition.falses, f);
-    if (s->u.while_stat.s) {
+    if (!s->u.while_stat.s || (s->u.while_stat.s->kind == A_nestedStm && s->u.while_stat.s->u.ns == NULL)) {
+        return Tr_Nx(T_Seq(T_Label(t), 
+                    T_Seq(condition.stm, 
+                        T_Label(f))));
+    } else {
         Temp_label b = Temp_newlabel();
         push_stack(b, f);
-        T_stm stm = unNx(translate_Stm(out, s->u.while_stat.s));
+        T_stm stm = unNx(translate_Stm(out, me, s->u.while_stat.s));
         pop_stack();
         return Tr_Nx(T_Seq(T_Label(b),
                     T_Seq(condition.stm,
@@ -381,114 +634,143 @@ Tr_exp translate_WhileStm(FILE* out, A_stm s) {
                             T_Seq(stm,
                                 T_Seq(T_Jump(b),
                                     T_Label(f)))))));
-    } else {
-        return Tr_Nx(T_Seq(T_Label(t), 
-                    T_Seq(condition.stm, 
-                        T_Label(f))));
     }
 }
 
-Tr_exp translate_AssignStm(FILE* out, A_stm s) {
+Tr_exp translate_AssignStm(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
-    Tr_exp arr = translate_Exp(out, s->u.assign.arr);
-    Tr_exp val = translate_Exp(out, s->u.assign.value);
+    Tr_exp arr = translate_Exp(out, me, s->u.assign.arr);
+    Tr_exp val = translate_Exp(out, me, s->u.assign.value);
     return Tr_Nx(T_Move(unEx(arr), unEx(val)));
 }
 
-Tr_exp translate_Continue(FILE* out, A_stm s) {
+Tr_exp translate_ArrayInit(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
-    if (stack_empty()) {
+    Tr_exp t = translate_Exp(out, me, s->u.array_init.arr);
+    return translate_ArrayExpList(out, me, s->u.array_init.init_values, unEx(t));
+}
+
+Tr_exp translate_CallStm(FILE* out, methodEntry me, A_stm s) {
+    if (!s) {
+        return NULL;
+    }
+    Ty_ty ty = check_Exp(out, me, s->u.call_stat.obj);
+    classEntry ce = (classEntry)S_look(classTable, S_Symbol(ty->id));
+    methodEntry localme = (methodEntry)S_look(ce->methodTable, S_Symbol(s->u.call_stat.fun));
+    Tr_exp obj = translate_Exp(out, me, s->u.call_stat.obj);
+    Temp_temp t = Temp_newtemp();
+    return Tr_Nx(
+        T_Seq(T_Move(T_Temp(t), unEx(obj)),
+        T_Exp(T_Call(s->u.call_stat.fun, 
+            T_Binop(T_plus, T_Temp(t), T_Binop(T_mul, T_Const(localme->offset), T_Const(byte_length))),
+            T_ExpList(T_Temp(t), transform_ExpList(out, me, s->u.call_stat.el))))));
+}
+
+Tr_exp translate_Continue(FILE* out, methodEntry me, A_stm s) {
+    if (!s) {
+        return NULL;
+    }
+    if (!loop_stack()) {
         fprintf(out, "line: %d:%d: continue is not in WhileStm!\n", s->pos->line, s->pos->pos);
         fflush(out);
         exit(1);
     }
-    return Tr_Nx(T_Jump(js->jl->begin));
+    return Tr_Nx(T_Jump(cs->jl->begin));
 }
 
-Tr_exp translate_Break(FILE* out, A_stm s) {
+Tr_exp translate_Break(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
-    if (stack_empty()) {
+    if (!loop_stack()) {
         fprintf(out, "line: %d:%d: break is not in WhileStm!\n", s->pos->line, s->pos->pos);
         fflush(out);
         exit(1);
     }
-    return Tr_Nx(T_Jump(js->jl->end));
+    return Tr_Nx(T_Jump(cs->jl->end));
 }
 
-Tr_exp translate_Return(FILE* out, A_stm s) {
+Tr_exp translate_Return(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
-    T_exp ret = unEx(translate_Exp(out, s->u.e));
+    T_exp ret = unEx(translate_Exp(out, me, s->u.e));
     return Tr_Nx(T_Return(ret));
 }
 
-Tr_exp translate_Putint(FILE* out, A_stm s) {
+Tr_exp translate_Putint(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
-    return Tr_Nx(T_Exp(T_ExtCall(String("putint"), T_ExpList(unEx(translate_Exp(out, s->u.e)), NULL))));
+    return Tr_Nx(T_Exp(T_ExtCall(String("putint"), T_ExpList(unEx(translate_Exp(out, me, s->u.e)), NULL))));
 }
 
-Tr_exp translate_Putch(FILE* out, A_stm s) {
+Tr_exp translate_Putch(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
-    return Tr_Nx(T_Exp(T_ExtCall(String("putch"), T_ExpList(unEx(translate_Exp(out, s->u.e)), NULL))));
+    return Tr_Nx(T_Exp(T_ExtCall(String("putch"), T_ExpList(unEx(translate_Exp(out, me, s->u.e)), NULL))));
 }
 
-Tr_exp translate_Starttime(FILE* out, A_stm s) {
+Tr_exp translate_Putarray(FILE* out, methodEntry me, A_stm s) {
+    if (!s) {
+        return NULL;
+    }
+    Tr_exp e1 = translate_Exp(out, me, s->u.putarray.e1);
+    Tr_exp e2 = translate_Exp(out, me, s->u.putarray.e2);
+    return Tr_Nx(T_Exp(T_ExtCall(String("putarray"), T_ExpList(unEx(e1), T_ExpList(unEx(e2), NULL)))));
+}
+
+Tr_exp translate_Starttime(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
     return Tr_Nx(T_Exp(T_ExtCall(String("starttime"), NULL)));
 }
 
-Tr_exp translate_Stoptime(FILE* out, A_stm s) {
+Tr_exp translate_Stoptime(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
     return Tr_Nx(T_Exp(T_ExtCall(String("stoptime"), NULL)));
 }
 
-Tr_exp translate_Stm(FILE* out, A_stm s) {
+Tr_exp translate_Stm(FILE* out, methodEntry me, A_stm s) {
     if (!s) {
         return NULL;
     }
     switch (s->kind) {
-    case A_nestedStm: return translate_NestedStm(out, s);
-    case A_ifStm: return translate_IfStm(out, s);
-    case A_whileStm: return translate_WhileStm(out, s);
-    case A_assignStm: return translate_AssignStm(out, s);
-    case A_arrayInit: break;
-    case A_callStm: break;
-    case A_continue: return translate_Continue(out, s);
-    case A_break: return translate_Break(out, s);
-    case A_return: return translate_Return(out, s);
-    case A_putint: return translate_Putint(out, s);
-    case A_putarray: break;
-    case A_putch: return translate_Putch(out, s);
-    case A_starttime: return translate_Starttime(out, s);
-    case A_stoptime: return translate_Stoptime(out, s);
+    case A_nestedStm: return translate_NestedStm(out, me, s);
+    case A_ifStm: return translate_IfStm(out, me, s);
+    case A_whileStm: return translate_WhileStm(out, me, s);
+    case A_assignStm: return translate_AssignStm(out, me, s);
+    case A_arrayInit: return translate_ArrayInit(out, me, s);
+    case A_callStm: return translate_CallStm(out, me, s);
+    case A_continue: return translate_Continue(out, me, s);
+    case A_break: return translate_Break(out, me, s);
+    case A_return: return translate_Return(out, me, s);
+    case A_putint: return translate_Putint(out, me, s);
+    case A_putarray: return translate_Putarray(out, me, s);
+    case A_putch: return translate_Putch(out, me, s);
+    case A_starttime: return translate_Starttime(out, me, s);
+    case A_stoptime: return translate_Stoptime(out, me, s);
     default: fprintf(out, "Unknown statement kind!"); fflush(out); exit(1);
     };
     return NULL;
 }
 
-Tr_exp translate_StmList(FILE* out, A_stmList sl) {
+Tr_exp translate_StmList(FILE* out, methodEntry me, A_stmList sl) {
     if (!sl) {
         return NULL;
     }
-    Tr_exp left = translate_Stm(out, sl->head);
+    Tr_exp left = translate_Stm(out, me, sl->head);
     Tr_exp right = NULL;
     if (sl->tail) {
-        right = translate_StmList(out, sl->tail);
+        right = translate_StmList(out, me, sl->tail);
     }
     if (!left && !right) {
         return NULL;
@@ -501,26 +783,31 @@ Tr_exp translate_StmList(FILE* out, A_stmList sl) {
     }
 }
 
-Tr_exp translate_VarDecl(FILE* out, A_varDecl vd) {
+Tr_exp translate_VarDecl(FILE* out, methodEntry me, A_varDecl vd) {
     if (!vd) {
         return NULL;
     }
     Temp_temp t = Temp_newtemp();
+    S_table tempTable = me->tempTable;
     S_enter(tempTable, S_Symbol(vd->v), t);
     if (vd->elist) {
-        return Tr_Nx(T_Move(T_Temp(t), T_Const(vd->elist->head->u.num)));
+        if (vd->t->t == A_intType) {
+            return Tr_Nx(T_Move(T_Temp(t), T_Const(vd->elist->head->u.num)));
+        } else if (vd->t->t == A_intArrType) {
+            return translate_ArrayExpList(out, me, vd->elist, T_Temp(t));
+        }
     }
     return NULL;
 }
 
-Tr_exp translate_VarDeclList(FILE* out, A_varDeclList vdl) {
+Tr_exp translate_VarDeclList(FILE* out, methodEntry me, A_varDeclList vdl) {
     if (!vdl) {
         return NULL;
     }
-    Tr_exp left = translate_VarDecl(out, vdl->head);
+    Tr_exp left = translate_VarDecl(out, me, vdl->head);
     Tr_exp right = NULL;
     if (vdl->tail) {
-        right = translate_VarDeclList(out, vdl->tail);
+        right = translate_VarDeclList(out, me, vdl->tail);
     }
     if (!left && !right) {
         return NULL;
@@ -533,13 +820,83 @@ Tr_exp translate_VarDeclList(FILE* out, A_varDeclList vdl) {
     }
 }
 
-T_funcDecl translate_MainMethod(FILE* out, A_mainMethod main) {
+Temp_temp translate_Formal(FILE* out, methodEntry me, A_formal f) {
+    if (!f) {
+        return NULL;
+    }
+    S_table tempTable = me->tempTable;
+    Temp_temp t = Temp_newtemp();
+    S_enter(tempTable, S_Symbol(f->id), t);
+    return t;
+}
+
+Temp_tempList translate_FormalList(FILE* out, methodEntry me, A_formalList fl) {
+    if (!fl) {
+        return NULL;
+    }
+    Temp_temp h = translate_Formal(out, me, fl->head);
+    Temp_tempList t = NULL;
+    if (fl->tail) {
+        t = translate_FormalList(out, me, fl->tail);
+    }
+    return Temp_TempList(h, t);
+}
+
+T_funcDecl translate_MethodDecl(FILE* out, classEntry ce, A_methodDecl md) {
+    if (!md) {
+        return NULL;
+    }
+    Tr_exp left = NULL, right = NULL;
+    methodEntry me = (methodEntry)S_look(ce->methodTable, S_Symbol(md->id));
+    Temp_tempList tl = NULL;
+    // add this
+    Temp_temp t = Temp_newtemp();
+    me->this = t;
+    if (md->fl) {
+        tl = translate_FormalList(out, me, md->fl);
+    }
+    if (md->vdl) {
+        left = translate_VarDeclList(out, me, md->vdl);
+    }
+    if (md->sl) {
+        right = translate_StmList(out, me, md->sl);
+    }
+
+    T_stm s = NULL;
+    if (!left && !right) {
+        s = NULL;
+    } else if (!left) {
+        s = unNx(right);
+    } else if (!right) {
+        s = unNx(left);
+    } else {
+        s = T_Seq(unNx(left), unNx(right));
+    }
+
+    char* id = (char*)malloc(strlen(me->from->id) + strlen(md->id) + 2);
+    sprintf(id, "%s%c%s", me->from->id, '_', md->id);
+    return T_FuncDecl(id, Temp_TempList(t, tl), s);
+}
+
+T_funcDeclList translate_MethodDeclList(FILE* out, classEntry ce, A_methodDeclList mdl) {
+    if (!mdl) {
+        return NULL;
+    }
+    T_funcDecl left = translate_MethodDecl(out, ce, mdl->head);
+    T_funcDeclList right = NULL;
+    if (mdl->tail) {
+        right = translate_MethodDeclList(out, ce, mdl->tail);
+    }
+    return T_FuncDeclList(left, right);
+}
+
+T_funcDecl translate_MainMethod(FILE* out, methodEntry me, A_mainMethod main) {
     Tr_exp left = NULL, right = NULL;
     if (main->vdl) {
-        left = translate_VarDeclList(out, main->vdl);
+        left = translate_VarDeclList(out, me, main->vdl);
     }
     if (main->sl) {
-        right = translate_StmList(out, main->sl);
+        right = translate_StmList(out, me, main->sl);
     }
 
     T_stm s = NULL;
@@ -555,11 +912,28 @@ T_funcDecl translate_MainMethod(FILE* out, A_mainMethod main) {
     return T_FuncDecl(String("main"), NULL, s);
 }
 
-T_funcDeclList translate_Prog(FILE* out, A_prog p) {
-    tempTable = S_empty();
-    T_funcDecl fd = NULL;
-    if (p->m) {
-        fd = translate_MainMethod(out, p->m);
+T_funcDeclList translate_ClassDecl(FILE* out, A_classDecl cd) {
+    return translate_MethodDeclList(out, (classEntry)S_look(classTable, S_Symbol(cd->id)), cd->mdl);
+}
+
+T_funcDeclList translate_ClassDeclList(FILE* out, A_classDeclList cdl) {
+    T_funcDeclList left = translate_ClassDecl(out, cdl->head);
+    T_funcDeclList right = NULL;
+    if (cdl->tail) {
+        right = translate_ClassDeclList(out, cdl->tail);
     }
-    return T_FuncDeclList(fd, NULL);
+    return joinFuncDeclList(left, right);
+}
+
+T_funcDeclList translate_Prog(FILE* out, A_prog p) {
+    T_funcDecl fd = NULL;
+    T_funcDeclList fdl = NULL;
+    methodEntry mainEntry = MethodEntry(NULL, NULL, Ty_Int(), NULL, NULL, 0);
+    if (p->m) {
+        fd = translate_MainMethod(out, mainEntry, p->m);
+    }
+    if (p->cdl) {
+        fdl = translate_ClassDeclList(out, p->cdl);
+    }
+    return T_FuncDeclList(fd, fdl);
 }

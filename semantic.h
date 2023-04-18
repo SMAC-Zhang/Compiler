@@ -1,11 +1,11 @@
-#ifndef __TYPE_CHECK_H
-#define __TYPE_CHECK_H
+#ifndef __SEMANTIC_H
+#define __SEMANTIC_H
 
 #include <stdio.h>
 #include <string.h>
-#include "semantic.h"
 #include "symbol.h"
 #include "types.h"
+#include "temp.h"
 
 // classEntry
 typedef struct classEntry_ classEntry_;
@@ -14,6 +14,8 @@ struct classEntry_ {
     S_table methodTable;
     S_table varTable;
     string id;
+    int var_offset;
+    int method_offset;
 };
 classEntry ClassEntry(string id);
 
@@ -21,13 +23,29 @@ classEntry ClassEntry(string id);
 typedef struct methodEntry_ methodEntry_;
 typedef struct methodEntry_ *methodEntry;
 struct methodEntry_ {
-    S_table localTable;
+    S_table localTable; // map var => ty 
+    S_table tempTable; // map var => temp
     classEntry ce;
+    classEntry from;
     Ty_ty ret;
     Ty_tyList fl;
+    A_methodDecl md;
+    int offset;
+    Temp_temp this;
 };
-methodEntry MethodEntry(classEntry ce, Ty_ty ret, Ty_tyList fl);
+methodEntry MethodEntry(classEntry ce, classEntry from, Ty_ty ret, Ty_tyList fl, A_methodDecl md, int offset);
 
+// varEntry
+typedef struct varEntry_ varEntry_;
+typedef struct varEntry_ *varEntry;
+struct varEntry_ {
+    Ty_ty ty;
+    A_varDecl vd;
+    int offset;
+};
+varEntry VarEntry(Ty_ty ty, A_varDecl vd, int offset);
+
+// check function
 Ty_ty check_OpExp(FILE* out, methodEntry me, A_exp e);
 Ty_ty check_ArrayExp(FILE* out, methodEntry me, A_exp e);
 Ty_ty check_CallExp(FILE* out, methodEntry me, A_exp e);
@@ -46,8 +64,8 @@ Ty_ty check_Getint(FILE* out, A_exp e);
 Ty_ty check_Getch(FILE* out, A_exp e);
 Ty_ty check_Getarray(FILE* out, methodEntry me, A_exp e);
 Ty_ty check_Exp(FILE* out, methodEntry me, A_exp e);
-void check_VarDecl(FILE* out, methodEntry me, S_table t, A_varDecl vd);
-void check_VarDeclList(FILE* out, methodEntry me, S_table t, A_varDeclList vdl);
+void check_VarDecl(FILE* out, methodEntry me, S_table t, A_varDecl vd, int offset);
+void check_VarDeclList(FILE* out, methodEntry me, classEntry ce, S_table t, A_varDeclList vdl, int offset);
 void check_NestedStm(FILE* out, methodEntry me, A_stm s);
 void check_IfStm(FILE* out, methodEntry me, A_stm s);
 void check_WhileStm(FILE* out, methodEntry me, A_stm s);
