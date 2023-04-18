@@ -5,6 +5,7 @@
 
 static bool error;
 S_table classTable;
+methodEntry mainMethodEntry;
 static S_table inheritTable;
 
 typedef struct classNode_ {
@@ -848,7 +849,11 @@ void check_MethodDeclList_wrap(FILE* out, classEntry ce, A_methodDeclList mdl) {
             fprintf(out, "line %d:%d: method %s redefinition\n", md->pos->line, md->pos->pos, md->id);
             return;
         }
-        S_enter(temp, S_Symbol(md->id), new_method);
+        if (old_method == NULL) {
+            S_enter(temp, S_Symbol(md->id), new_method);
+        } else {
+            memcpy(old_method, new_method, sizeof(*old_method));
+        }
         cur = cur->tail;
     }
     S_copy(temp, methodTable);
@@ -976,7 +981,7 @@ void check_ClassDeclList(FILE* out, S_table t, A_classDeclList cdl) {
 
 void check_Prog(FILE* out, A_prog p) {
     classTable = S_empty();
-    methodEntry mainMethodEntry = MethodEntry(NULL, NULL, Ty_Int(), Ty_TyList(NULL, NULL), NULL, 0);
+    mainMethodEntry = MethodEntry(NULL, NULL, Ty_Int(), Ty_TyList(NULL, NULL), NULL, 0);
     inheritTable = S_empty();
     if (p->cdl) {
         check_ClassDeclList(out, classTable, p->cdl);

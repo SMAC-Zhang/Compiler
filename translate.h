@@ -28,7 +28,7 @@ Tr_exp translate_Getch(FILE* out, methodEntry me, A_exp e);
 Temp_temp translate_Formal(FILE* out, methodEntry me, A_formal f);
 Temp_tempList translate_FormalList(FILE* out, methodEntry me, A_formalList fl);
 
-T_funcDecl tranlate_MethodDecl(FILE* out, classEntry ce, A_methodDecl md);
+T_funcDecl translate_MethodDecl(FILE* out, classEntry ce, A_methodDecl md);
 T_funcDeclList translate_MethodDeclList(FILE* out, classEntry ce, A_methodDeclList mdl);
 T_funcDeclList translate_ClassDecl(FILE* out, A_classDecl cd);
 T_funcDeclList translate_ClassDeclList(FILE* out, A_classDeclList cdl);
