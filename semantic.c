@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include "semantic.h"
 #include "symbol.h"
@@ -987,12 +988,15 @@ void check_Prog(FILE* out, A_prog p) {
         check_ClassDeclList(out, classTable, p->cdl);
     }
     if (error) {
-        return;
+        exit(1);
     }
     if (p->m) {
         check_MainMethod(out, mainMethodEntry, p->m);
     } else {
         fprintf(out, "Error: There's no main class!\n");
         error = TRUE;
+    }
+    if (error) {
+        exit(1);
     }
 }
