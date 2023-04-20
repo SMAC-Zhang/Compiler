@@ -186,45 +186,32 @@ static Tr_exp translate_ArrayExpList(FILE* out, methodEntry me, A_expList el, T_
         head = head->tail;
         len++;
     }
-    Temp_temp tt = Temp_newtemp();
     head = el;
-    T_stm s = T_Seq(T_Move(T_Temp(tt), t), 
-    T_Seq(
-        T_Move(T_Temp(tt), 
+    T_stm off = T_Move(
+        T_Mem(
+            T_Binop(T_plus, t, T_Binop(T_mul, T_Const(-1), T_Const(byte_length)))
+        ),
+        T_Const(len)
+    );
+    T_stm s = T_Seq(
+        T_Move(t, 
             T_Binop(T_plus,
                 T_ExtCall(String("malloc"), 
                     T_ExpList(
                         T_Binop(T_mul, T_Const(len + 1), T_Const(byte_length)),
                             NULL)), 
-                T_Binop(T_mul, T_Const(1), T_Const(byte_length)))), NULL));
-    T_stm h = s->u.SEQ.right;
-    T_stm off = T_Move(
-        T_Mem(
-            T_Binop(T_plus, T_Temp(tt), T_Binop(T_mul, T_Const(-1), T_Const(byte_length)))
-        ),
-        T_Const(len)
-    );
-    if (len != 0) {
-        h->u.SEQ.right = T_Seq(off, NULL);
-        h = h->u.SEQ.right;
-    } else {
-        h->u.SEQ.right = off;
-    }
+                T_Binop(T_mul, T_Const(1), T_Const(byte_length)))), off);
+    T_stm h = s;
 
     for (int i = 0; i < len; ++i, el = el->tail) {
         Tr_exp e = translate_Exp(out, me, el->head);
         T_stm left = T_Move(
             T_Mem(
-                T_Binop(T_plus, T_Temp(tt), T_Binop(T_mul, T_Const(i), T_Const(byte_length)))
+                T_Binop(T_plus, t, T_Binop(T_mul, T_Const(i), T_Const(byte_length)))
             ), 
             unEx(e)
         );
-        if (i == len - 1) {
-            h->u.SEQ.right = left;
-        } else {
-            h->u.SEQ.right = T_Seq(left, NULL);
-            h = h->u.SEQ.right;
-        }
+        h = T_Seq(h, left);
     }
     return Tr_Nx(s);
 }
@@ -292,7 +279,6 @@ static T_funcDeclList joinFuncDeclList(T_funcDeclList first, T_funcDeclList seco
     first->tail = second;
     return head;
 }
-
 
 // translate
 Tr_exp translate_OpExp(FILE* out, methodEntry me, A_exp e) {
@@ -415,26 +401,6 @@ Tr_exp translate_NewIntArrExp(FILE* out, methodEntry me, A_exp e) {
                 T_Temp(t)));
 }
 
-static void eliminate_seq_null(T_stm s) {
-    if (!s || s->kind != T_SEQ) {
-        return;
-    }
-    T_stm prev = s;
-    while (s->u.SEQ.right && s->u.SEQ.right->kind == T_SEQ) {
-        s = s->u.SEQ.right;
-        if (prev->u.SEQ.right != s) {
-            prev = prev->u.SEQ.right;
-        }
-    }
-    if (s->u.SEQ.right == NULL) {
-        if (prev == s) {
-            memcpy(prev, s->u.SEQ.left, sizeof(*s));
-        } else {
-            prev->u.SEQ.right = s->u.SEQ.left;
-        }
-    }
-}
-
 Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
     if (!e) {
         return NULL;
@@ -442,11 +408,10 @@ Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
     // 申请空间
     Temp_temp t = Temp_newtemp();
     classEntry ce = (classEntry)S_look(classTable, S_Symbol(e->u.v));
-    T_stm s = T_Move(T_Temp(t), 
+    T_stm ret = T_Move(T_Temp(t), 
                 T_ExtCall(String("malloc"), 
                 T_ExpList(T_Binop(T_mul, T_Const(ce->method_offset), T_Const(byte_length)), NULL)));
     char** off = get_offset(ce->method_offset, ce);
-    T_stm ret = T_Seq(s, NULL);
     T_stm head = ret;
     // 填充空间
     for (int i = 0; i < ce->method_offset; ++i) {
@@ -456,9 +421,7 @@ Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
                                 T_Binop(T_mul, T_Const(i), T_Const(byte_length))));
             T_stm s = new_obj_VarDecl(out, me, ve->vd, mem);
             if (s != NULL) {
-                T_stm seq = T_Seq(s, NULL);
-                head->u.SEQ.right = seq;
-                head = head->u.SEQ.right;
+                head = T_Seq(head, s);
             }
         } else {
             methodEntry me = (methodEntry)S_look(ce->methodTable, S_Symbol(off[i]));
@@ -467,12 +430,9 @@ Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
             char* id = (char*)malloc(strlen(me->from->id) + strlen(me->md->id) + 2);
             sprintf(id, "%s%c%s", me->from->id, '_', me->md->id);
             T_stm s = T_Move(mem, T_Name(Temp_namedlabel(id)));
-            T_stm seq = T_Seq(s, NULL);
-            head->u.SEQ.right = seq;
-            head = head->u.SEQ.right;
+            head = T_Seq(head, s);
         }
     }
-    eliminate_seq_null(ret);
     return Tr_Ex(T_Eseq(ret, T_Temp(t)));
 }
 
