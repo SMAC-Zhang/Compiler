@@ -179,7 +179,7 @@ static bool loop_stack() {
     return FALSE;
 }
 
-static Tr_exp translate_ArrayExpList(FILE* out, methodEntry me, A_expList el, T_exp t) {
+static Tr_exp translate_ArrayExpList(FILE* out, methodEntry me, A_expList el, T_exp e) {
     int len = 0;
     A_expList head = el;
     while (head) {
@@ -187,6 +187,7 @@ static Tr_exp translate_ArrayExpList(FILE* out, methodEntry me, A_expList el, T_
         len++;
     }
     head = el;
+    T_exp t = T_Temp(Temp_newtemp());
     T_stm off = T_Move(
         T_Mem(
             T_Binop(T_plus, t, T_Binop(T_mul, T_Const(-1), T_Const(byte_length)))
@@ -194,14 +195,13 @@ static Tr_exp translate_ArrayExpList(FILE* out, methodEntry me, A_expList el, T_
         T_Const(len)
     );
     T_stm s = T_Seq(
-        T_Move(t, 
-            T_Binop(T_plus,
-                T_ExtCall(String("malloc"), 
-                    T_ExpList(
-                        T_Binop(T_mul, T_Const(len + 1), T_Const(byte_length)),
-                            NULL)), 
-                T_Binop(T_mul, T_Const(1), T_Const(byte_length)))), off);
-    T_stm h = s;
+            T_Move(t, 
+                T_Binop(T_plus,
+                    T_ExtCall(String("malloc"), 
+                        T_ExpList(
+                            T_Binop(T_mul, T_Const(len + 1), T_Const(byte_length)),
+                                NULL)), 
+                    T_Binop(T_mul, T_Const(1), T_Const(byte_length)))), off);
 
     for (int i = 0; i < len; ++i, el = el->tail) {
         Tr_exp e = translate_Exp(out, me, el->head);
@@ -211,9 +211,9 @@ static Tr_exp translate_ArrayExpList(FILE* out, methodEntry me, A_expList el, T_
             ), 
             unEx(e)
         );
-        h = T_Seq(h, left);
+        s = T_Seq(s, left);
     }
-    return Tr_Nx(s);
+    return Tr_Nx(T_Seq(s, T_Move(e, t)));
 }
 
 static T_expList transform_ExpList(FILE* out, methodEntry me, A_expList el) {
@@ -395,7 +395,7 @@ Tr_exp translate_NewIntArrExp(FILE* out, methodEntry me, A_exp e) {
                             T_ExpList(T_Binop(T_mul, 
                                 T_Binop(T_plus, T_Temp(tt), T_Const(1)), 
                                 T_Const(byte_length)), NULL)), 
-                            T_Const(1))), 
+                            T_Binop(T_mul, T_Const(1), T_Const(byte_length)))), 
                     T_Move(T_Mem(T_Binop(T_plus, T_Temp(t), T_Binop(T_mul, T_Const(-1), T_Const(byte_length)))),
                             T_Temp(tt)))),
                 T_Temp(t)));
@@ -412,7 +412,6 @@ Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
                 T_ExtCall(String("malloc"), 
                 T_ExpList(T_Binop(T_mul, T_Const(ce->method_offset), T_Const(byte_length)), NULL)));
     char** off = get_offset(ce->method_offset, ce);
-    T_stm head = ret;
     // 填充空间
     for (int i = 0; i < ce->method_offset; ++i) {
         if (i < ce->var_offset) {
@@ -421,7 +420,7 @@ Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
                                 T_Binop(T_mul, T_Const(i), T_Const(byte_length))));
             T_stm s = new_obj_VarDecl(out, me, ve->vd, mem);
             if (s != NULL) {
-                head = T_Seq(head, s);
+                ret = T_Seq(ret, s);
             }
         } else {
             methodEntry me = (methodEntry)S_look(ce->methodTable, S_Symbol(off[i]));
@@ -430,7 +429,7 @@ Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
             char* id = (char*)malloc(strlen(me->from->id) + strlen(me->md->id) + 2);
             sprintf(id, "%s%c%s", me->from->id, '_', me->md->id);
             T_stm s = T_Move(mem, T_Name(Temp_namedlabel(id)));
-            head = T_Seq(head, s);
+            ret = T_Seq(ret, s);
         }
     }
     return Tr_Ex(T_Eseq(ret, T_Temp(t)));
