@@ -938,6 +938,14 @@ void parse_ClassDecl(FILE* out, classEntry ce, A_classDecl cd) {
         }
         // 复制父类的表
         S_copy(parentCe->methodTable, ce->methodTable);
+        for (int i = 0; i < TABSIZE; ++i) {
+            binder b = ce->methodTable->table[i];
+            while (b) {
+                methodEntry me = (methodEntry)(b->value);
+                b->value = MethodEntry(me->ce, me->from, me->ret, me->fl, me->md, me->offset);
+                b = b->next;
+            }
+        }
         S_copy(parentCe->varTable, ce->varTable);
         ce->var_offset = parentCe->var_offset;
         ce->method_offset = parentCe->method_offset;
