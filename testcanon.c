@@ -1,32 +1,25 @@
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "printast.h"
-#include "y.tab.h"
-#include "semantic.h"
-#include "translate.h"
-#include "pr_tree_readable.h"
-#include "printtreep.h"
+#include <string.h>
+#include "util.h"
+#include "symbol.h"
+#include "temp.h"
+#include "treep.h"
 #include "canon.h"
+#include "printtreep.h"
+#include "pr_tree_readable.h"
 #include "pr_linearized.h"
 
-A_prog root;
-A_prog prog1();
-
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     bool friendly=FALSE;
 
     if (argc>1 && strcmp(argv[1], "friendly")==0) 
        friendly=TRUE;
+  
 
-    yyparse(); 
-    // printA_Prog(stdout, root);
-    FILE* irp = fopen(argv[2], "w");
-    check_Prog(irp, root);
-    T_funcDeclList fl = translate_Prog(irp, root);
+    T_funcDeclList fl=tree1(argv[2]);
     T_stm s;
-    
+
     while (fl) {
       fprintf(stdout, "Original IR Tree:\n");
       s=fl->head->stm;
@@ -56,5 +49,6 @@ int main(int argc, char* argv[]) {
     }
 
     fprintf(stdout, "\n");
+
     return 0;
 }

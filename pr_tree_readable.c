@@ -12,8 +12,8 @@
 /* local function prototype */
 static void pr_tree_exp(FILE *out, T_exp exp, int d);
 
-int inst=1;
-int eseqlevel=0;
+static int inst=1;
+static int eseqlevel=0;
 
 static void indent(FILE *out, int d) {
  int i;
@@ -38,12 +38,12 @@ static void pr_stm(FILE *out, T_stm stm, int d)
   case T_SEQ:
     if (stm->u.SEQ.left->kind!=T_SEQ) {
       indent_dash(out,eseqlevel);
-      fprintf(out, "[Stm#%d]", inst++); d=1; 
+      fprintf(out, "[Seq-Stm#%d]", inst++); d=1; 
     } 
     else indent(out, d);
     fprintf(out, "SEQ(\n"); pr_stm(out, stm->u.SEQ.left,d+1);  fprintf(out, ",\n"); 
     if (stm->u.SEQ.right && stm->u.SEQ.right->kind!=T_SEQ) 
-          {indent_dash(out, eseqlevel); fprintf(out, "[Stm#%d]", inst++); d=1;}
+          {indent_dash(out, eseqlevel); fprintf(out, "[Seq-Stm#%d]", inst++); d=1;}
     pr_stm(out, stm->u.SEQ.right,d+1); fprintf(out, ")");
     break;
   case T_LABEL:
@@ -96,7 +96,7 @@ static void pr_tree_exp(FILE *out, T_exp exp, int d)
     eseqlevel++;
     indent(out,d); fprintf(out, "ESEQ(\n"); 
     if (exp->u.ESEQ.stm->kind!=T_SEQ) {
-      indent_dash(out, eseqlevel); fprintf(out, "[Stm#%d]", inst++); d=eseqlevel;
+      indent_dash(out, eseqlevel); fprintf(out, "[Seq-Stm#%d]", inst++); d=eseqlevel;
     }
     pr_stm(out, exp->u.ESEQ.stm,d+1); 
     fprintf(out, "\n"); pr_tree_exp(out, exp->u.ESEQ.exp,d+1); fprintf(out, ")");
@@ -138,7 +138,7 @@ static void pr_tree_exp(FILE *out, T_exp exp, int d)
   } /* end of switch */
 }
 
-void printStmList (FILE *out, T_stmList stmList, int d) 
+static void printStmList (FILE *out, T_stmList stmList, int d) 
 {
   T_stmList l=stmList;
   if (l) {
@@ -161,7 +161,14 @@ void printStmList (FILE *out, T_stmList stmList, int d)
   return ;
 }
 
-void printFuncDecl(FILE *out, T_funcDecl funcDecl) 
+void printStmList_readable(FILE *out, T_stmList stmList, int d) 
+{ 
+  printStmList(out, stmList, d);
+  fprintf(out, "\n");
+  return;
+}
+
+static void printFuncDecl(FILE *out, T_funcDecl funcDecl) 
 {
   Temp_tempList t=funcDecl->args;
   T_stm sl=funcDecl->stm;
@@ -178,6 +185,8 @@ void printFuncDecl(FILE *out, T_funcDecl funcDecl)
       }
   }
 
+  inst=1;
+
   fprintf(out, "\n[STMS:]\n");
   if (sl) {
    if (sl->kind != T_SEQ) { 
@@ -191,7 +200,7 @@ void printFuncDecl(FILE *out, T_funcDecl funcDecl)
   return;
 }
 
-void printFuncDeclList(FILE *out, T_funcDeclList funcDeclList) 
+void printFuncDeclList_readable(FILE *out, T_funcDeclList funcDeclList) 
 {
    T_funcDeclList l=funcDeclList;
    while (l) { 

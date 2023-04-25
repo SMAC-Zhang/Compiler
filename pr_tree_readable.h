@@ -1,10 +1,10 @@
-#ifndef _PRINTTREE
-#define _PRINTTREE
+#ifndef _PRINTTREE_READABLE
+#define _PRINTTREE_READABLE
 /* function prototype from printtree.c */
 #include "treep.h"
 
-void printStmList (FILE*, T_stmList, int);
-void printFuncDeclList(FILE*, T_funcDeclList);
-void printFuncDecl(FILE*, T_funcDecl);
+void printFuncDeclList_readable(FILE*, T_funcDeclList);
+void printStmList_readable(FILE*, T_stmList, int d);
+
 
 #endif
