@@ -4,7 +4,7 @@
 #include "symbol.h"
 #include "semantic.h"
 
-static int byte_length = 4; // 4 Bytes
+static int byte_length = 8; // 4 Bytes
 extern S_table classTable;
 extern methodEntry mainMethodEntry;
 
@@ -427,7 +427,7 @@ Tr_exp translate_NewObjExp(FILE* out, methodEntry me, A_exp e) {
             T_exp mem = T_Mem(T_Binop(T_plus, T_Temp(t), 
                                 T_Binop(T_mul, T_Const(i), T_Const(byte_length))));
             char* id = (char*)malloc(strlen(me->from->id) + strlen(me->md->id) + 2);
-            sprintf(id, "%s%c%s", me->from->id, '_', me->md->id);
+            sprintf(id, "%s%c%s", me->from->id, '@', me->md->id);
             T_stm s = T_Move(mem, T_Name(Temp_namedlabel(id)));
             ret = T_Seq(ret, s);
         }
@@ -851,7 +851,7 @@ T_funcDecl translate_MethodDecl(FILE* out, classEntry ce, A_methodDecl md) {
     }
 
     char* id = (char*)malloc(strlen(me->from->id) + strlen(md->id) + 2);
-    sprintf(id, "%s%c%s", me->from->id, '_', md->id);
+    sprintf(id, "%s%c%s", me->from->id, '&', md->id);
     return T_FuncDecl(id, Temp_TempList(t, tl), s);
 }
 
