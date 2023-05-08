@@ -196,7 +196,8 @@ static C_stmListList next(T_stmList prevstms, T_stmList stms, Temp_label done)
   if (!stms) 
     return next(prevstms, 
 		T_StmList(T_Jump(done), NULL), done); //in treep only a label
-  if (stms->head->kind == T_JUMP || stms->head->kind == T_CJUMP) {
+  if (stms->head->kind == T_JUMP || stms->head->kind == T_CJUMP 
+	|| stms->head->kind == T_RETURN ) {
     C_stmListList stmLists;
     prevstms->tail = stms; 
     stmLists = mkBlocks(stms->tail, done);
@@ -261,6 +262,7 @@ static void trace(T_stmList list) //this list is a basic block
   T_stmList last = getLast(list); //second to the last before the jump/cjump
   T_stm lab = list->head;
   T_stm s = last->tail->head; //the last (last) stm (jump/cjump)
+				//or a return
   S_enter(block_env, lab->u.LABEL, NULL); //second to last should be a label?
   if (s->kind == T_JUMP) {
     //T_stmList target = (T_stmList) S_look(block_env, s->u.JUMP.jumps->head);
@@ -295,6 +297,9 @@ static void trace(T_stmList list) //this list is a basic block
       last->tail->tail = T_StmList(T_Label(false), getNext());
     }
   }
+  else if (s->kind == T_RETURN) {
+    last->tail->tail=getNext(); /* return also ends a block */
+  }
   else assert(0); //if the last statement is not jump/cjump: error!
 }
 
@@ -303,7 +308,9 @@ static void trace(T_stmList list) //this list is a basic block
 static T_stmList getNext()
 {
   if (!global_block.stmLists)
-    return T_StmList(T_Label(global_block.label), NULL);
+    //return T_StmList(T_Label(global_block.label), NULL);
+    return T_StmList(T_Label(global_block.label), 
+		     T_StmList(T_Return(T_Const(-1)), NULL));
   else {
     T_stmList s = global_block.stmLists->head;
     if (S_look(block_env, s->head->u.LABEL)) {/* label exists in the table */
