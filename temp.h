@@ -7,6 +7,7 @@
  */
 
 #include "symbol.h"
+#include "util.h"
 
 typedef struct Temp_temp_ *Temp_temp;
 Temp_temp Temp_newtemp(void);
@@ -32,5 +33,7 @@ string Temp_look(Temp_map m, Temp_temp t);
 void Temp_dumpMap(FILE *out, Temp_map m);
 
 Temp_map Temp_name(void);
+
+string args_to_string(Temp_tempList tl);
 
 #endif

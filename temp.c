@@ -111,3 +111,16 @@ void Temp_dumpMap(FILE *out, Temp_map m) {
      Temp_dumpMap(out,m->under);
   }
 }
+
+string args_to_string(Temp_tempList tl) {
+  char ret[1024] = {'\0'};
+  while (tl) {
+    if (tl->tail) {
+      strcat(ret, String_format("i64 %t%d, ", tl->head->num));
+    } else {
+      strcat(ret, String_format("i64 %t%d", tl->head->num));      
+    }
+    tl = tl->tail;
+  }
+  return String(ret);
+}

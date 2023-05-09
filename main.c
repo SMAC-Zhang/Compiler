@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 		} else {
 			printFuncDeclList(line, T_FuncDeclList(fl->head, NULL));
 		}
+		fprintf(llir, "define i64 @%s(%s) {\n", fl->head->name, args_to_string(fl->head->args));
 		T_stmList sl = C_linearize(s);
 		
 		fprintf(line, "\nLinearized IR Tree:\n");
@@ -60,6 +61,7 @@ int main(int argc, char* argv[]) {
 			AS_instrList al = codegen(sList->head);
 			AS_printInstrList(llir, al, Temp_name());
 		}
+		fprintf(llir, "}\n");
 
 		fprintf(line, "\n\nThe Final Canonical Tree:\n");
 		printStmList_linearized(line, C_traceSchedule(c), 0);
