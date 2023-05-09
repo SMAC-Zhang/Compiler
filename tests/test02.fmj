@@ -1,16 +1,8 @@
 public int main() {
-    int i=3;
-    int []a={9,8,7,6,5,4,3,2,1,0};
-    return new c1().m1(a,i);
-}
+  int a=0;
+  int b;
+  int c=0;
 
-public class c1 {
-    int max=-100;
-    public int m1(int[] a, int i) {
-        while (length(a)>i) {
-            if (a[i]>this.max) this.max=a[i];
-            i=i+1;
-        }
-        return this.max;
-    }
+  while (({b=a+1; c=c+b; a=b*2;} a) < 10) ;
+  return c;
 }

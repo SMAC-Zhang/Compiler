@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "util.h"
 
 #define BUFSIZE 1024
@@ -16,6 +17,16 @@ void *checked_malloc(int len)
     exit(1);
  }
  return p;
+}
+
+void *checked_realloc(void *p, size_t size)
+{
+	void *ptr = realloc(p, size);
+	if (!ptr) {
+		fprintf(stderr, "\nRand out of memory (realloc)!\n");
+		exit(1);
+	}
+	return ptr;
 }
 
 string String(char *s)
@@ -53,14 +64,21 @@ string String_format(const char *s, ...)
 		if (*p == '%') {
 			switch (*++p) {
 			case 's':
-					str = va_arg(ap, const char *);
-					break;
+				str = va_arg(ap, const char *);
+				break;
 			case 'd':
-					str = String_from_int(va_arg(ap, int));
-					isDigit = TRUE;
-					break;
-			default:
-					assert(0); /* Invalid format specifier */
+				str = String_from_int(va_arg(ap, int));
+				isDigit = TRUE;
+				break;
+			case '%':
+				str = "%";
+				break;
+			default: {
+				char temp[4];
+				sprintf(temp, "%%%c", *p);
+				str = String(temp);
+				break;
+			}
 			}
 			n = strlen(str);
 		} else {

@@ -6,6 +6,11 @@
  *             using Maximal Munch.
  */
 
+#include <stdio.h>
+
+#include "util.h"
+#include "temp.h"
+
 typedef struct {Temp_labelList labels;} *AS_targets;
 AS_targets AS_Targets(Temp_labelList labels);
 

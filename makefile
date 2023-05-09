@@ -2,16 +2,16 @@ TESTCASE_DIR := tests
 FMJ_TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fmj)
 C_TESTCASES = $(wildcard $(TESTCASE_DIR)/*.c)
 
-#testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(FMJ_TESTCASES))
-testline: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.line, $(FMJ_TESTCASES))
+testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(FMJ_TESTCASES))
+#testline: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.line, $(FMJ_TESTCASES))
 
-# $(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
-# 	@echo TEST $*
-# 	@./main unfriendly < $< > $@
-
-$(TESTCASE_DIR)/%.line: $(TESTCASE_DIR)/%.fmj main
+$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
-	@./main friendly tests/error.output < $< > $@
+	@./main friendly $(TESTCASE_DIR)/$*.irp $(TESTCASE_DIR)/$*.line $(TESTCASE_DIR)/$*.llir < $<
+
+# $(TESTCASE_DIR)/%.line: $(TESTCASE_DIR)/%.fmj main
+# 	@echo TEST $*
+# 	@./main friendly tests/error.output < $< > $@
 
 canon.o: canon.c canon.h
 	@cc -g -c canon.c
@@ -22,7 +22,8 @@ printtreep.o: printtreep.c printtreep.h
 pr_linearized.o: pr_linearized.c pr_linearized.h
 	@cc -g -c pr_linearized.c
 
-main: main.o prog1.o util.o printast.o fdmjast.o y.tab.o lex.yy.o types.o symbol.o table.o semantic.o treep.o pr_tree_readable.o translate.o temp.o printtreep.o pr_linearized.o canon.o
+main: main.o prog1.o util.o printast.o fdmjast.o y.tab.o lex.yy.o types.o symbol.o table.o semantic.o \
+	treep.o pr_tree_readable.o translate.o temp.o printtreep.o pr_linearized.o canon.o assem.o codegen.o
 	@cc -g $^ -o $@
 
 main.o: main.c prog1.c util.h util.c printast.h printast.c fdmjast.h fdmjast.c y.tab.c y.tab.h types.h types.c symbol.h symbol.c table.h table.c semantic.h semantic.c 
@@ -79,8 +80,32 @@ translate.o: translate.c translate.h treep.h util.h symbol.h temp.h table.h
 temp.o: temp.h temp.c table.h symbol.h
 	@cc -g -c temp.c
 
+codegen.o: codegen.h codegen.c
+	@cc -g -c codegen.c
+
+assem.o: assem.h assem.c
+	@cc -g -c assem.c
+
+assemblock.o: assemblock.h assemblock.c
+	@cc -g -c assemblock.c
+
+bg.o: bg.h bg.c
+	@cc -g -c bg.c
+
+flowgraph.o: flowgraph.h flowgraph.c
+	@cc -g -c flowgraph.c
+
+graph.o: graph.c graph.h
+	@cc -g -c graph.c
+
+ig.o: ig.c ig.h
+	@cc -g -c ig.c
+
+liveness.o: liveness.c liveness.h
+	@cc -g -c liveness.c
+
 clean: 
-	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.line
+	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.line $(TESTCASE_DIR)/*.irp $(TESTCASE_DIR)/*.llir
 
 bclean:
 	rm -f *.o main y.output lib.ll

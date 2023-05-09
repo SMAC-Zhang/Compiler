@@ -1,18 +1,13 @@
 public int main() {
-    int i=3;
-    int []a={9,8,7,6,5,4,3,2,1,0};
-    putint(2*new c1().m1(a,i*3));
-    return ({i=getint();} i);
-}
-
-public class c1 {
-    int max=-100;
-
-    public int m1(int[] a, int i) {
-        while (length(a)>i) {
-            if (a[i]>this.max) this.max=a[i];
-            i=i+1;
-        }
-        return this.max;
-    }
+  int[] a={4, 3, 2, 1, 0};
+  int i=0;
+  int m=-100;
+  int l;
+  
+  l=length(a);
+  while (l>i) {
+    if (a[i]>m) m=a[i];
+    i=i+1;
+  }
+  return m;
 }

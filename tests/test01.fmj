@@ -1,15 +1,16 @@
 public int main() {
-  int a;
-  int b;
+    return new c1().m1();
+}
 
-  starttime();
-  b=1;
-  if (b>0) 
-    a=3;
-  else
-    a=2;
-  while (a+10 >= ({a=a+1; a=a;} a));
-  putint(a);
-  stoptime();
-  return ({a=12; putint(a);} a);
+public class c1 {
+    public int m1() {
+      int a0=9;
+      int a1=8;
+      int a2=7;
+      int a3=6;
+      int m=2;
+      int sum;
+      sum=(a0+a1+a2+a3)*m;
+      return sum;
+    }
 }
