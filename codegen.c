@@ -298,9 +298,14 @@ static void munchStm(T_stm s) {
 			break;
         }
         case T_RETURN: {
-            Temp_temp ret = munchExp(s->u.EXP);
-            emit(AS_Oper(String_format("ret i64 %%`s0\n"),
-                NULL, Temp_TempList(ret, NULL), NULL));
+            if (s->u.EXP->kind == T_CONST) {
+                emit(AS_Oper(String_format("ret i64 %d\n", s->u.EXP->u.CONST),
+                    NULL, NULL, NULL));
+            } else {
+                Temp_temp ret = munchExp(s->u.EXP);
+                emit(AS_Oper(String_format("ret i64 %%`s0\n"),
+                    NULL, Temp_TempList(ret, NULL), NULL));
+            }
             break;
         }
         default: fprintf(stderr, "error in munchStm!\n"); break;
