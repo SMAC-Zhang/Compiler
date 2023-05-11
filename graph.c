@@ -98,6 +98,9 @@ void G_show(FILE *out, G_nodeList p, void showInfo(void *)) {
     G_node n = p->head;
     G_nodeList q;
     assert(n);
+    if (!n->info) {
+      continue;
+    }
     if (showInfo) 
       showInfo(n->info);
     fprintf(out, " (%d): ", n->mykey); 
