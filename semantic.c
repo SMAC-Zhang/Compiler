@@ -809,7 +809,7 @@ void check_MethodDeclList_wrap(FILE* out, classEntry ce, A_methodDeclList mdl) {
         Ty_ty ret = NULL;
         switch (md->t->t) {
         case A_intType: ret = Ty_Int(); break;
-        case A_intArrType: ret = Ty_Array(); break;
+        case A_intArrType: ret = Ty_PointerArray(); break;
         case A_idType: {
             ret = Ty_Class(md->t->id);
             if (S_look(classTable, S_Symbol(md->t->id)) == NULL) {

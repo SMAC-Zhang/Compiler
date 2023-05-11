@@ -7,7 +7,7 @@ testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(FMJ_TESTC
 
 $(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
-	@./main friendly $(TESTCASE_DIR)/$*.irp $(TESTCASE_DIR)/$*.line $(TESTCASE_DIR)/$*.llir < $<
+	@./main friendly $(TESTCASE_DIR)/$*.irp $(TESTCASE_DIR)/$*.line $(TESTCASE_DIR)/$*.llir < $< > $(TESTCASE_DIR)/$*.graph
 
 # $(TESTCASE_DIR)/%.line: $(TESTCASE_DIR)/%.fmj main
 # 	@echo TEST $*
@@ -23,7 +23,8 @@ pr_linearized.o: pr_linearized.c pr_linearized.h
 	@cc -g -c pr_linearized.c
 
 main: main.o prog1.o util.o printast.o fdmjast.o y.tab.o lex.yy.o types.o symbol.o table.o semantic.o \
-	treep.o pr_tree_readable.o translate.o temp.o printtreep.o pr_linearized.o canon.o assem.o codegen.o
+	treep.o pr_tree_readable.o translate.o temp.o printtreep.o pr_linearized.o canon.o assem.o codegen.o \
+	assemblock.o bg.o graph.o liveness.o flowgraph.o ig.o
 	@cc -g $^ -o $@
 
 main.o: main.c prog1.c util.h util.c printast.h printast.c fdmjast.h fdmjast.c y.tab.c y.tab.h types.h types.c symbol.h symbol.c table.h table.c semantic.h semantic.c 
@@ -105,7 +106,7 @@ liveness.o: liveness.c liveness.h
 	@cc -g -c liveness.c
 
 clean: 
-	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.line $(TESTCASE_DIR)/*.irp $(TESTCASE_DIR)/*.llir
+	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.line $(TESTCASE_DIR)/*.irp $(TESTCASE_DIR)/*.llir $(TESTCASE_DIR)/*.graph $(TESTCASE_DIR)/*.bg
 
 bclean:
 	rm -f *.o main y.output lib.ll
