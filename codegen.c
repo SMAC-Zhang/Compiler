@@ -66,6 +66,7 @@ static Temp_tempList munch_args(int n, T_expList el, string s, bool first) {
         } else {
             strcat(s, String_format(", i64 %d", el->head->u.CONST));
         }
+        n--;
     } else {
         e = munchExp(el->head);
         if (first) {
