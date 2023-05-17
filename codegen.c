@@ -240,11 +240,11 @@ static void munchStm(T_stm s) {
                         Temp_TempList(l1, 0), Temp_TempList(dst, NULL), NULL));
                 }
                 if (s->u.MOVE.src->kind == T_CONST) {
-                    emit(AS_Oper(String_format("store i64 %d, ptr %%`d0", s->u.MOVE.src->u.CONST),
-                        Temp_TempList(l1, NULL), NULL, NULL));
+                    emit(AS_Oper(String_format("store i64 %d, ptr %%`s0", s->u.MOVE.src->u.CONST),
+                        NULL, Temp_TempList(l1, NULL), NULL));
                 } else {
-                    emit(AS_Oper(String_format("store i64 %%`s0, ptr %%`d0"),
-                        Temp_TempList(l1, NULL), Temp_TempList(src, NULL), NULL));
+                    emit(AS_Oper(String_format("store i64 %%`s0, ptr %%`s1"),
+                        NULL, Temp_TempList(src, Temp_TempList(l1, NULL)), NULL));
                 }
             } else if (s->u.MOVE.src->kind == T_MEM) {
                 Temp_temp src = NULL;
@@ -260,6 +260,11 @@ static void munchStm(T_stm s) {
                 }
                 emit(AS_Oper(String_format("%%`d0 = load i64, ptr %%`s0"),
                     Temp_TempList(dst, NULL), Temp_TempList(l1, NULL), NULL));
+            } else if (s->u.MOVE.dst->kind == T_TEMP && s->u.MOVE.src->kind == T_TEMP){
+                Temp_temp src = munchExp(s->u.MOVE.src);
+                Temp_temp dst = munchExp(s->u.MOVE.dst);
+                emit(AS_Move(String_format("%%`d0 = add i64 %%`s0, 0"),
+                    Temp_TempList(dst, NULL), Temp_TempList(src, NULL)));
             } else {
                 switch (s->u.MOVE.src->kind) {
                     case T_BINOP: {

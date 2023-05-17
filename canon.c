@@ -46,7 +46,8 @@ struct stmExp {T_stm s; T_exp e;};
 
 static T_stm reorder(expRefList rlist) {
    if (!rlist) return T_Exp(T_Const(0)); /* nop */
-   else if ((*rlist->head)->kind==T_CALL || 
+   else 
+	if ((*rlist->head)->kind==T_CALL || 
 		(*rlist->head)->kind==T_ExtCALL) {
       Temp_temp t = Temp_newtemp();
       *rlist->head = T_Eseq(T_Move(T_Temp(t),*rlist->head),T_Temp(t));
@@ -118,8 +119,6 @@ static struct stmExp do_exp(T_exp exp)
 	  T_Move(T_Temp(t),exp)), T_Temp(t));
   case T_ExtCALL:    
       t = Temp_newtemp();
-      return StmExp(seq(reorder(get_call_rlist(exp)), 
-	  T_Move(T_Temp(t),exp)), T_Temp(t));
       return StmExp(seq(reorder(get_extcall_rlist(exp)),
 	  T_Move(T_Temp(t), exp)), T_Temp(t));
   default:
