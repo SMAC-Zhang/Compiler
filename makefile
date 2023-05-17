@@ -24,7 +24,7 @@ pr_linearized.o: pr_linearized.c pr_linearized.h
 
 main: main.o prog1.o util.o printast.o fdmjast.o y.tab.o lex.yy.o types.o symbol.o table.o semantic.o \
 	treep.o pr_tree_readable.o translate.o temp.o printtreep.o pr_linearized.o canon.o assem.o codegen.o \
-	assemblock.o bg.o graph.o liveness.o flowgraph.o ig.o
+	assemblock.o bg.o graph.o liveness.o flowgraph.o ig.o ssa.o
 	@cc -g $^ -o $@
 
 main.o: main.c prog1.c util.h util.c printast.h printast.c fdmjast.h fdmjast.c y.tab.c y.tab.h types.h types.c symbol.h symbol.c table.h table.c semantic.h semantic.c 
@@ -104,6 +104,9 @@ ig.o: ig.c ig.h
 
 liveness.o: liveness.c liveness.h
 	@cc -g -c liveness.c
+
+ssa.o: ssa.c ssa.h
+	@cc -g -c ssa.c
 
 clean: 
 	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.line $(TESTCASE_DIR)/*.irp $(TESTCASE_DIR)/*.llir $(TESTCASE_DIR)/*.graph $(TESTCASE_DIR)/*.bg

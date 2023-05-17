@@ -23,6 +23,10 @@ struct G_node_ {
   void *info;
 };
 
+int G_id(G_node n) {
+  return n->mykey;
+}
+
 G_graph G_Graph(void)
 {G_graph g = (G_graph) checked_malloc(sizeof *g);
  g->nodecount = 0;
@@ -119,7 +123,7 @@ bool G_goesTo(G_node from, G_node n) {
 }
 
 /* return length of predecessor list for node n */
-static int inDegree(G_node n)
+int inDegree(G_node n)
 { int deg = 0;
   G_nodeList p;
   for(p=G_pred(n); p!=NULL; p=p->tail) deg++;
@@ -127,7 +131,7 @@ static int inDegree(G_node n)
 }
 
 /* return length of successor list for node n */
-static int outDegree(G_node n)
+int outDegree(G_node n)
 { int deg = 0;
   G_nodeList p; 
   for(p=G_succ(n); p!=NULL; p=p->tail) deg++;

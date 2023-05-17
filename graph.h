@@ -44,7 +44,10 @@ G_nodeList G_pred(G_node n);
 bool G_goesTo(G_node from, G_node n);
 
 /* Tell how many edges lead to or from "n" */
+int inDegree(G_node n);
+int outDegree(G_node n);
 int G_degree(G_node n);
+int G_id(G_node n);
 
 /* Get all the successors and predecessors of "n" */
 G_nodeList G_adj(G_node n);

@@ -36,4 +36,7 @@ Temp_map Temp_name(void);
 
 string args_to_string(Temp_tempList tl);
 
+int temp_num();
+int temp_id(Temp_temp);
+
 #endif
