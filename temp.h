@@ -38,5 +38,7 @@ string args_to_string(Temp_tempList tl);
 
 int temp_num();
 int temp_id(Temp_temp);
+int temp_id2name(int id);
+Temp_temp get_temp(int name);
 
 #endif

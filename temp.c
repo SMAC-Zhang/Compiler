@@ -52,6 +52,16 @@ int temp_id(Temp_temp t) {
   return t->num - 100;
 }
 
+int temp_id2name(int id) {
+  return id + 100;
+}
+
+Temp_temp get_temp(int name) {
+  Temp_temp t = checked_malloc(sizeof (*t));
+  t->num = name;
+  return t;
+}
+
 struct Temp_map_ {TAB_table tab; Temp_map under;};
 
 

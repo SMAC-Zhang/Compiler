@@ -84,13 +84,13 @@ int main(int argc, char* argv[]) {
 		AS_instrList asts = AS_traceSchedule(asbl, prolog, epilog, FALSE);
 		AS_printInstrList(llir, asts, Temp_name());
 		Show_bg(stdout, Create_bg(asbl));
-		G_graph G=FG_AssemFlowGraph(asts);
-		G_show(stdout, G_nodes(G), (void*)show);
-		G_nodeList lg=Liveness(G_nodes(G));
-    	Show_Liveness(stdout, lg);
+		// G_graph G=FG_AssemFlowGraph(asts);
+		// G_show(stdout, G_nodes(G), (void*)show);
+		// G_nodeList lg=Liveness(G_nodes(G));
+    	// Show_Liveness(stdout, lg);
 		printf("------Interference Graph---------\n");
-    	G_nodeList ig=Create_ig(lg);
-    	Show_ig(stdout, ig);
+    	// G_nodeList ig=Create_ig(lg);
+    	// Show_ig(stdout, ig);
 		
 		fprintf(line, "\n\nThe Final Canonical Tree:\n");
 		printStmList_linearized(line, C_traceSchedule(c), 0);
