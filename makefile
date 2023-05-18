@@ -7,7 +7,7 @@ testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(FMJ_TESTC
 
 $(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
-	@./main friendly $(TESTCASE_DIR)/$*.irp $(TESTCASE_DIR)/$*.line $(TESTCASE_DIR)/$*.llir < $< > $(TESTCASE_DIR)/$*.graph
+	@./main < $< > $(TESTCASE_DIR)/$*.ll
 
 # $(TESTCASE_DIR)/%.line: $(TESTCASE_DIR)/%.fmj main
 # 	@echo TEST $*
@@ -109,7 +109,10 @@ ssa.o: ssa.c ssa.h
 	@cc -g -c ssa.c
 
 clean: 
-	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.line $(TESTCASE_DIR)/*.irp $(TESTCASE_DIR)/*.llir $(TESTCASE_DIR)/*.graph $(TESTCASE_DIR)/*.bg
+	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.ll
 
 bclean:
 	rm -f *.o main y.output lib.ll
+
+fclean:
+	rm -f $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.ll

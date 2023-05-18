@@ -13,13 +13,17 @@
 #include "temp.h"
 #include "table.h"
 
-struct Temp_temp_ {int num;};
+struct Temp_temp_ {
+  int num;
+  int origin;
+};
 
 string Temp_labelstring(Temp_label s)
 {return S_name(s);
 }
 
 static int labels = 0;
+static Temp_temp atemp_map[2048];
 
 Temp_label Temp_newlabel(void)
 {char buf[100];
@@ -37,11 +41,17 @@ static int temps = 100;
 Temp_temp Temp_newtemp(void)
 {Temp_temp p = (Temp_temp) checked_malloc(sizeof (*p));
  p->num=temps++;
+ p->origin = p->num - 100;
  {char r[16];
   sprintf(r, "%d", p->num);
   Temp_enter(Temp_name(), p, String(r));
  }
+ atemp_map[p->num - 100] = p;
  return p;
+}
+
+void set_origin(Temp_temp t, int origin) {
+  t->origin = origin;
 }
 
 int temp_num() {
@@ -56,10 +66,12 @@ int temp_id2name(int id) {
   return id + 100;
 }
 
+int temp_origin(Temp_temp t) {
+  return t->origin;
+}
+
 Temp_temp get_temp(int name) {
-  Temp_temp t = checked_malloc(sizeof (*t));
-  t->num = name;
-  return t;
+  return atemp_map[name - 100];
 }
 
 struct Temp_map_ {TAB_table tab; Temp_map under;};

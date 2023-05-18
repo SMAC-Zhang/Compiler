@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "util.h"
 #include "graph.h"
@@ -16,6 +17,7 @@ static bool* get_union(bool *a, bool *b, int len) {
     for (int i = 0; i < len; ++i) {
         c[i] = a[i] || b[i];
     }
+    return c;
 }
 
 // 求交集
@@ -25,6 +27,17 @@ static bool* get_inter(bool *a, bool *b, int len) {
     for (int i = 0; i < len; ++i) {
         c[i] = a[i] && b[i];
     }
+    return c;
+}
+
+// 求差集
+static bool* get_diff(bool* a, bool* b, int len) {
+    bool *c = checked_malloc(len * sizeof(bool));
+    memset(c, 0, len * sizeof(bool));
+    for (int i = 0; i < len; ++i) {
+        c[i] = a[i] && !b[i];
+    }
+    return c;
 }
 
 // 判断两个集合是否相等
@@ -38,7 +51,7 @@ static bool is_same(bool* a, bool* b, int len) {
 }
 
 // 数据结构栈
-#define STACK_SIZE 256
+#define STACK_SIZE 1024
 typedef struct stack_ *stack;
 struct stack_ {
     int size;
@@ -75,12 +88,15 @@ static int Stack_top(stack s) {
     return s->data[s->size];
 }
 
+static int Stack_size(stack s) {
+    return s->size + 1;
+}
+
 // 每个变量都要一个栈和一个结点域
 typedef struct var_Struct_ *var_Struct;
 struct var_Struct_ {
     stack st;
     bool* defsites;
-    int count;
 };
 
 static var_Struct Var_Struct(int node_num) {
@@ -88,18 +104,21 @@ static var_Struct Var_Struct(int node_num) {
     p->st = Stack();
     p->defsites = checked_malloc(node_num * sizeof(bool));
     memset(p->defsites, 0, node_num * sizeof(bool));
-    p->count = 0;
     return p;
 }
 
 // 每个结点需要记录Aorig， Aphi, DF, D
 typedef struct node_Struct_ *node_Struct;
-static struct node_Struct_ {
+struct node_Struct_ {
     bool* orig;
     bool* phi;
     bool* DF; // 必经结点边界
     bool* D; // 必经结点
     bool* son; // 必经结点树的儿子
+    bool* In;
+    bool* Out;
+    bool* Use;
+    bool* Def;
     G_node idom;
     G_node self;
 };
@@ -108,6 +127,41 @@ static node_Struct Node_Struct(G_node n, int var_num, int node_num) {
     node_Struct p = checked_malloc(sizeof *p);
     p->orig = checked_malloc(var_num * sizeof(bool));
     memset(p->orig, 0, var_num * sizeof(bool));
+    p->In = checked_malloc(var_num * sizeof(bool));
+    memset(p->In, 0, var_num * sizeof(bool));
+    p->Out = checked_malloc(var_num * sizeof(bool));
+    memset(p->Out, 0, var_num * sizeof(bool));
+    p->Def = checked_malloc(var_num * sizeof(bool));
+    memset(p->Def, 0, var_num * sizeof(bool));
+    p->Use = checked_malloc(var_num * sizeof(bool));
+    AS_block asb = G_nodeInfo(n);
+    AS_instrList instrs = asb->instrs;
+    while (instrs) {
+        AS_instr instr = instrs->head;
+        Temp_tempList def = NULL, use = NULL;
+        if (instr->kind == I_OPER) {
+            def = instr->u.OPER.dst;
+            use = instr->u.OPER.src;
+        } else if (instr->kind == I_MOVE) {
+            def = instr->u.MOVE.dst;
+            use = instr->u.OPER.src;   
+        } else {
+            // 对LABEL语句应该什么都不做？
+        }
+        while (def) {
+            p->orig[temp_id(def->head)] = TRUE;
+            p->Def[temp_id(def->head)] = TRUE;
+            def = def->tail;
+        }
+        while (use) {
+            if (p->Def[temp_id(use->head)] == FALSE) {
+                p->Use[temp_id(use->head)] = TRUE;
+            }
+            use = use->tail;
+        }
+        instrs = instrs->tail;
+    }
+
     p->phi = checked_malloc(var_num * sizeof(bool));
     memset(p->phi, 0, var_num * sizeof(bool));
     // 在计算DF时会赋值
@@ -119,7 +173,8 @@ static node_Struct Node_Struct(G_node n, int var_num, int node_num) {
     // memset(p->D, 0, node_num * sizeof(bool));
     // p->D[G_id(n)] = TRUE; // 自己是自己的必经结点
     p->son = checked_malloc(node_num * sizeof(bool));
-    memset(p->son, 0, node_num * sizeof(bool));   
+    memset(p->son, 0, node_num * sizeof(bool));
+
     p->idom = NULL;
     p->self = n;
     return p;
@@ -137,13 +192,43 @@ static void init_struct(G_nodeList gl) {
     for (int i = 0; i < var_num; ++i) {
         var_set[i] = Var_Struct(node_num);
     }
+
     // 初始化结点数据结构
-    if (node_num == 0) {
-        return;
-    }
     node_set = checked_malloc(node_num * sizeof(node_Struct));
-    for (G_node n = gl->head; gl; gl = gl->tail, n = gl->head) {
+    while (gl) {
+        G_node n = gl->head;
         node_set[G_id(n)] = Node_Struct(n, var_num, node_num);
+        gl = gl->tail;
+    }
+}
+
+// 计算活跃性迭代
+static bool mylivenessIteration() {
+    bool changed = FALSE;
+    for (int i = 0; i < node_num; ++i) {
+        bool *in = get_union(node_set[i]->Use, get_diff(node_set[i]->Out, node_set[i]->Def, var_num), var_num);
+
+        G_nodeList succ = G_succ(node_set[i]->self);
+        bool* out = checked_malloc(var_num * sizeof (bool));
+        memset(out, 0, var_num * sizeof(bool));
+        while (succ) {
+            out = get_union(out, node_set[G_id(succ->head)]->In, var_num);
+            succ = succ->tail;
+        }
+        if (!is_same(node_set[i]->In, in, var_num) || !is_same(node_set[i]->Out, out, var_num)) {
+            changed = TRUE;
+        }
+        node_set[i]->In = in;
+        node_set[i]->Out = out;
+    }
+    return changed;
+}
+
+// 活跃分析
+static void myliveness() {
+    bool changed = TRUE;
+    while (changed) {
+        changed = mylivenessIteration();
     }
 }
 
@@ -165,7 +250,8 @@ static void topo_dfs(int* N, bool* mark, int* sorted, G_node i) {
 static void topological_sort(int* sorted, G_node root) {
     bool* mark = checked_malloc(node_num * sizeof(bool));
     memset(mark, 0, node_num * sizeof(bool));
-    dfs(&node_num, mark, sorted, root);
+    int temp_node_num = node_num;
+    topo_dfs(&temp_node_num, mark, sorted, root);
 }
 
 // 18.1.1, 计算必经结点树
@@ -177,7 +263,7 @@ static void compute_dom(G_nodeList gl) {
         node_set[i]->D = checked_malloc(node_num * sizeof(bool));
         if (i == 0) {
             memset(node_set[i]->D, 0, node_num * sizeof(bool));
-            node_set[i]->D = TRUE;
+            node_set[i]->D[0] = TRUE;
         } else {
             memset(node_set[i]->D, 1, node_num * sizeof(bool));
         }
@@ -192,9 +278,10 @@ static void compute_dom(G_nodeList gl) {
             memset(S, 1, node_num * sizeof(bool));
             while (pred) {
                 int pid = G_id(pred->head);
-                node_set[i]->D = get_inter(node_set[pid]->D, S, node_num);
+                S = get_inter(node_set[pid]->D, S, node_num);
                 pred = pred->tail;
             }
+
             bool *SS = checked_malloc(node_num * sizeof(bool));
             memset(SS, 0, node_num * sizeof(bool));
             SS[i] = TRUE;
@@ -248,7 +335,8 @@ static void computeDF(G_node n) {
     memset(S, 0, node_num * sizeof(bool));
     while (succ) {
         G_node y = succ->head;
-        if (G_id(node_set[G_id(y)]->idom) != G_id(n)) {
+        G_node idom = node_set[G_id(y)]->idom;
+        if (idom && G_id(idom) != G_id(n)) {
             S[G_id(y)] = TRUE;
         }
         succ = succ->tail;
@@ -272,7 +360,7 @@ static void computeDF(G_node n) {
 
 // 构造phi语句
 static AS_instr make_phi(int var, int node) {
-    char* s[1024] = {'\0'};
+    char s[1024] = {'\0'};
     strcat(s, String_format("%%`d0 = phi i64 "));
 
     Temp_temp t = get_temp(temp_id2name(var));
@@ -299,17 +387,7 @@ static AS_instr make_phi(int var, int node) {
         num++;
         pred = pred->tail;
     }
-
-    return AS_Oper(s, dst, src, AS_Targets(tl));
-}
-
-static bool find_in_temp(int var, Temp_tempList tl) {
-    while (tl) {
-        if (temp_id(tl->head) == var) {
-            return TRUE;
-        }
-    }
-    return FALSE;
+    return AS_Oper(String(s), dst, src, AS_Targets(tl));
 }
 
 // 算法19-1, 插入phi函数
@@ -318,7 +396,7 @@ static void place_phi_functions(G_nodeList gl) {
         bool *orig = node_set[n]->orig;
         for (int a = 0; a < var_num; ++a) {
             if (orig[a] == TRUE) { // 对Aorig[n]中的每个变量a
-                var_set[a]->defsites[G_id(n)] = TRUE;
+                var_set[a]->defsites[n] = TRUE;
             }
         }
     }
@@ -337,10 +415,10 @@ static void place_phi_functions(G_nodeList gl) {
                     for (int Y = 0; Y < node_num; ++Y) {
                         if (DFn[Y] == TRUE) { // 对DF[n]中的每个Y
                             // a 需要在结点Y上是livein的
-                            if (node_set[Y]->phi[a] == FALSE && find_in_temp(a, FG_In(node_set[Y]->self))) {
+                            if (node_set[Y]->phi[a] == FALSE && node_set[Y]->In[a]) {
                                 AS_instr phi_instr = make_phi(a, Y);
                                 AS_block asb = G_nodeInfo(node_set[Y]->self);
-                                asb->instrs = (phi_instr, asb->instrs);
+                                asb->instrs->tail = AS_InstrList(phi_instr, asb->instrs->tail);
                                 node_set[Y]->phi[a] = TRUE;
                                 if (node_set[Y]->orig[a] == FALSE && W[Y] == FALSE) {
                                     W[Y] = TRUE;
@@ -358,7 +436,12 @@ static void place_phi_functions(G_nodeList gl) {
 
 // 判断是否是phi语句
 static bool is_phi(AS_instr instr) {
-    string ass = instr->u.OPER.assem;
+    string ass = NULL;
+    if (instr->kind == I_OPER) {
+        ass = instr->u.OPER.assem;
+    } else {
+        return FALSE;
+    }
     for (int i = 0; i < strlen(ass); ++i) {
         if (ass[i] == '[') {
             return TRUE;
@@ -381,8 +464,8 @@ static int find_seq(G_nodeList gl, G_node n) {
     fprintf(stderr, "Not Find!!!\n");
 }
 
-//重命名变量
-static void rename(int n) {
+// 算法19-2 重命名变量
+static void rename_var(int n) {
     // 1.对于n中的每一个语句S
     AS_block asb = G_nodeInfo(node_set[n]->self);
     AS_instrList instrs = asb->instrs;
@@ -399,37 +482,41 @@ static void rename(int n) {
                 // 对LABEL语句应该什么都不做？
             }
             while (use) {
-                use->head = get_temp(Stack_top(var_set[temp_id(use->head)]->st)); 
+                use->head = get_temp(Stack_top(var_set[temp_origin(use->head)]->st)); 
                 use = use->tail;
             }    
-
         }
         // 对S中的每一个定值
         Temp_tempList def = NULL;
         if (instr->kind == I_OPER) {
             def = instr->u.OPER.dst;
         } else if (instr->kind == I_MOVE) {
-            Temp_tempList def = instr->u.MOVE.dst;   
+            def = instr->u.MOVE.dst;   
         } else {
             // 对LABEL语句应该什么都不做？
         }
         while (def) {
-            Temp_temp t = Temp_newtemp();
-            Stack_Push(var_set[temp_id(def->head)]->st, temp_id2name(temp_id(t)));
-            def->head = t; 
+            if (Stack_size(var_set[temp_origin(def->head)]->st) > 0) {
+                Temp_temp t = Temp_newtemp();
+                set_origin(t, temp_origin(def->head));
+                Stack_Push(var_set[temp_origin(def->head)]->st, temp_id2name(temp_id(t)));
+                def->head = t;
+            } else {
+                Stack_Push(var_set[temp_origin(def->head)]->st, temp_id2name(temp_id(def->head)));
+            }
             def = def->tail;
         }    
         instrs = instrs->tail;
     }
     
     // 2.对n的每一个后继Y
-    G_nodeList pred = G_pred(node_set[n]->self);
-    while (pred) {
-        G_node Y = pred->head;
+    G_nodeList succ = G_succ(node_set[n]->self);
+    while (succ) {
+        G_node Y = succ->head;
         // 设n是Y的第j个前驱
-        int j = find_seq(G_succ(Y), node_set[n]->self);
+        int j = find_seq(G_pred(Y), node_set[n]->self);
         // 对Y中的每一个phi函数
-        AS_block asb_Y = G_nodeInfo(node_set[n]->self);
+        AS_block asb_Y = G_nodeInfo(node_set[G_id(Y)]->self);
         AS_instrList instrs_Y = asb_Y->instrs;
         while (instrs_Y) {
             AS_instr S = instrs_Y->head;
@@ -438,17 +525,17 @@ static void rename(int n) {
                 for (int i = 0; i < j; ++i) {
                     use = use->tail;
                 }
-                use->head = get_temp(Stack_top(var_set[temp_id(use->head)]->st)); 
+                use->head = get_temp(Stack_top(var_set[temp_origin(use->head)]->st)); 
             }
             instrs_Y = instrs_Y->tail;
         }
-        pred = pred->tail;
+        succ = succ->tail;
     }
-    
+
     // 3.对n的每一个儿子X
-    for (int i = 0; i < node_num; ++i) {
-        if (node_set[i]->son[i]) {
-            rename(i);
+    for (int x = 0; x < node_num; ++x) {
+        if (node_set[n]->son[x]) {
+            rename_var(x);
         }
     }
     
@@ -465,41 +552,70 @@ static void rename(int n) {
             // 对LABEL语句应该什么都不做？
         }
         while (def) {
-            Stack_Pop(var_set[temp_id(def->head)]->st);
+            Stack_Pop(var_set[temp_origin(def->head)]->st);
             def = def->tail;
         }    
         instrs = instrs->tail;
     }
 }
 
-// 算法19-2 重命名变量
-static void rename_var() {
-    //初始化：
-    for (int a = 0; a < var_num; ++a) {
-        Stack_Push(var_set[a]->st, temp_id2name(a));
-    }
-    // 从必经结点树的根开始
-    // 根是否为0?
-    rename(0);
-}
-
 void ssa_form(G_nodeList gl) {
     var_num = temp_num();
     // 统计结点数量
     node_num = 0;
-    while (gl) {
-        gl = gl->tail;
+    G_nodeList temp_gl = gl;
+    while (temp_gl) {
+        temp_gl = temp_gl->tail;
         node_num++;
     }
     // 初始化数据结构
     init_struct(gl);
     // 计算活跃性
-    Liveness(gl);
-    
+    myliveness();
+
     // ssa
     compute_dom(gl);
     compute_idom();
-    computeDF(gl);
+    computeDF(gl->head);
     place_phi_functions(gl);
-    rename_var();
+    rename_var(0);
+}
+
+// 打印活跃图
+// debug 用
+static void print_liveness() {
+    for (int i = 0; i < node_num; ++i) {
+        fprintf(stderr, "node %d: \n", i);
+        fprintf(stderr, "   Use: ");
+        for (int j = 0; j < var_num; ++j) {
+            if (node_set[i]->Use[j]) {
+                fprintf(stderr, "%d, ", temp_id2name(j));
+            }
+        }
+        fprintf(stderr, "\n");
+
+        fprintf(stderr, "   Def: ");
+        for (int j = 0; j < var_num; ++j) {
+            if (node_set[i]->Def[j]) {
+                fprintf(stderr, "%d, ", temp_id2name(j));
+            }
+        }
+        fprintf(stderr, "\n");
+
+        fprintf(stderr, "   In: ");
+        for (int j = 0; j < var_num; ++j) {
+            if (node_set[i]->In[j]) {
+                fprintf(stderr, "%d, ", temp_id2name(j));
+            }
+        }
+        fprintf(stderr, "\n");
+
+        fprintf(stderr, "   Out: ");
+        for (int j = 0; j < var_num; ++j) {
+            if (node_set[i]->Use[j]) {
+                fprintf(stderr, "%d, ", temp_id2name(j));
+            }
+        }
+        fprintf(stderr, "\n");
+    }
 }

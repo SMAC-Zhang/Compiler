@@ -18,58 +18,29 @@
 #include "liveness.h"
 #include "flowgraph.h"
 #include "ig.h"
+#include "ssa.h"
 
 A_prog root;
 A_prog prog1();
 
-void show(AS_instr ins) {
-    FG_Showinfo(stdout, ins, Temp_name());
-}
-
 int main(int argc, char* argv[]) {
-    bool friendly = FALSE;
-
-	if (argc != 5) {
-		fprintf(stderr, "Usage: friendly testxx.irp testxx.line testxx.llir\n");
-		exit(1);
-	}
-
-    if (argc > 1 && strcmp(argv[1], "friendly")==0) {
-       friendly = TRUE;
-	}
 
     yyparse(); 
     // printA_Prog(stdout, root);
-    FILE* irp = fopen(argv[2], "w");
-	FILE* line = fopen(argv[3], "w");
-	FILE* llir = fopen(argv[4], "w");
-    check_Prog(irp, root);
-    T_funcDeclList fl = translate_Prog(irp, root);
-    T_stm s;
+    check_Prog(stderr, root);
+    T_funcDeclList fl = translate_Prog(stderr, root);
     
+	T_stm s;
     while (fl) {
-		fprintf(line, "Original IR Tree:\n");
 		s=fl->head->stm;
-		if (friendly) {
-			printFuncDeclList_readable(line, T_FuncDeclList(fl->head, NULL));
-		} else {
-			printFuncDeclList(line, T_FuncDeclList(fl->head, NULL));
-		}
 		T_stmList sl = C_linearize(s);
-		
-		fprintf(line, "\nLinearized IR Tree:\n");
-		printStmList_linearized(line, sl, 0);
-		fprintf(line, "\n");
-		
+				
 		struct C_block c = C_basicBlocks(sl);
 		AS_instrList prolog = NULL, body = NULL, epilog = NULL;
 		AS_blockList asbl = NULL, tail = NULL;
 		prolog = progen(fl->head);
 		
-		fprintf(line, "How It's Broken Up:\n");
 		for (C_stmListList sList=c.stmLists; sList; sList=sList->tail) {
-			fprintf(line, "\nFor Label=%s\n", S_name(sList->head->head->u.LABEL));
-			printStmList_linearized(line, sList->head, 0);
 			AS_block asb = AS_Block(codegen(sList->head));
 			if (tail == NULL) {
 				asbl = tail = AS_BlockList(asb, NULL);
@@ -80,24 +51,21 @@ int main(int argc, char* argv[]) {
 		}
 		epilog = epigen(c.label);
 
+		// 插入头结点
+		Temp_label root = Temp_newlabel();
+		AS_instr ri1 = AS_Label(String_format("%s:", Temp_labelstring(root)), root);
+		AS_instr ri2 = AS_Oper(String_format("br label %%`j0"), fl->head->args, NULL, AS_Targets(Temp_LabelList(asbl->head->label, NULL)));
+		AS_block root_block = AS_Block(AS_InstrList(ri1, AS_InstrList(ri2, NULL)));
+		asbl = AS_BlockList(root_block, asbl);
 		// 输出
-		AS_instrList asts = AS_traceSchedule(asbl, prolog, epilog, FALSE);
-		AS_printInstrList(llir, asts, Temp_name());
-		Show_bg(stdout, Create_bg(asbl));
-		// G_graph G=FG_AssemFlowGraph(asts);
-		// G_show(stdout, G_nodes(G), (void*)show);
-		// G_nodeList lg=Liveness(G_nodes(G));
-    	// Show_Liveness(stdout, lg);
-		printf("------Interference Graph---------\n");
-    	// G_nodeList ig=Create_ig(lg);
-    	// Show_ig(stdout, ig);
+		G_nodeList bg = Create_bg(asbl);
+		ssa_form(bg);
+		AS_instrList il = AS_traceSchedule(asbl, prolog, epilog, FALSE);
+		AS_printInstrList(stdout, il, Temp_name());
 		
-		fprintf(line, "\n\nThe Final Canonical Tree:\n");
-		printStmList_linearized(line, C_traceSchedule(c), 0);
-
 		fl = fl->tail;
     }
 
-    fprintf(llir, "declare ptr @malloc(i64)\n");
+    printf("declare ptr @malloc(i64)\n");
     return 0;
 }

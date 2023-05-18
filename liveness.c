@@ -116,7 +116,7 @@ Temp_tempList FG_Out(G_node n) {
     else return NULL;
 }
 
-//initialize the INOUT info for a graph
+// initialize the INOUT info for a graph
 static void init_INOUT_graph(G_nodeList l) {
     while ( l!=NULL ) {
         if (INOUT_lookup(l->head) == NULL) //If there is no io info yet, initialize one
