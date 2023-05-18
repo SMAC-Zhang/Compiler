@@ -54,7 +54,14 @@ int main(int argc, char* argv[]) {
 		// 插入头结点
 		Temp_label root = Temp_newlabel();
 		AS_instr ri1 = AS_Label(String_format("%s:", Temp_labelstring(root)), root);
-		AS_instr ri2 = AS_Oper(String_format("br label %%`j0"), fl->head->args, NULL, AS_Targets(Temp_LabelList(asbl->head->label, NULL)));
+		Temp_label temp_l = NULL;
+		if (asbl == NULL) {
+			temp_l = c.label;
+		}
+		else {
+			temp_l = asbl->head->label;
+		}
+		AS_instr ri2 = AS_Oper(String_format("br label %%`j0"), fl->head->args, NULL, AS_Targets(Temp_LabelList(temp_l, NULL)));
 		AS_block root_block = AS_Block(AS_InstrList(ri1, AS_InstrList(ri2, NULL)));
 		asbl = AS_BlockList(root_block, asbl);
 		// 输出
