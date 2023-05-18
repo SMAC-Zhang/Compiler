@@ -48,6 +48,7 @@ int inDegree(G_node n);
 int outDegree(G_node n);
 int G_degree(G_node n);
 int G_id(G_node n);
+int G_nodecount(G_node n);
 
 /* Get all the successors and predecessors of "n" */
 G_nodeList G_adj(G_node n);

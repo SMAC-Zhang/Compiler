@@ -125,6 +125,7 @@ struct node_Struct_ {
 
 static node_Struct Node_Struct(G_node n, int var_num, int node_num) {
     node_Struct p = checked_malloc(sizeof *p);
+
     p->orig = checked_malloc(var_num * sizeof(bool));
     memset(p->orig, 0, var_num * sizeof(bool));
     p->In = checked_malloc(var_num * sizeof(bool));
@@ -134,6 +135,8 @@ static node_Struct Node_Struct(G_node n, int var_num, int node_num) {
     p->Def = checked_malloc(var_num * sizeof(bool));
     memset(p->Def, 0, var_num * sizeof(bool));
     p->Use = checked_malloc(var_num * sizeof(bool));
+    memset(p->Use, 0, var_num * sizeof(bool));
+    
     AS_block asb = G_nodeInfo(n);
     AS_instrList instrs = asb->instrs;
     while (instrs) {
@@ -195,6 +198,7 @@ static void init_struct(G_nodeList gl) {
 
     // 初始化结点数据结构
     node_set = checked_malloc(node_num * sizeof(node_Struct));
+    memset(node_set, 0, node_num * sizeof(node_Struct));
     while (gl) {
         G_node n = gl->head;
         node_set[G_id(n)] = Node_Struct(n, var_num, node_num);
@@ -257,8 +261,6 @@ static void topological_sort(int* sorted, G_node root) {
 // 18.1.1, 计算必经结点树
 static void compute_dom(G_nodeList gl) {
     // 初始化
-    int *sorted = checked_malloc(node_num * sizeof(int));
-    topological_sort(sorted, gl->head);
     for (int i = 0; i < node_num; ++i) {
         node_set[i]->D = checked_malloc(node_num * sizeof(bool));
         if (i == 0) {
@@ -562,12 +564,8 @@ static void rename_var(int n) {
 void ssa_form(G_nodeList gl) {
     var_num = temp_num();
     // 统计结点数量
-    node_num = 0;
-    G_nodeList temp_gl = gl;
-    while (temp_gl) {
-        temp_gl = temp_gl->tail;
-        node_num++;
-    }
+    node_num = G_nodecount(gl->head);
+
     // 初始化数据结构
     init_struct(gl);
     // 计算活跃性

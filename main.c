@@ -23,6 +23,32 @@
 A_prog root;
 A_prog prog1();
 
+// 删除孤儿结点
+void delete_nofa_node(G_nodeList bg) {
+	while (TRUE) {
+		bool nice = TRUE;
+		G_nodeList temp_bg = bg->tail, prev = bg;
+		while (temp_bg) {
+			G_node n = temp_bg->head;
+			if (G_pred(n) == NULL) {
+				nice = FALSE;
+				G_nodeList succ = G_succ(n);
+				while (succ) {
+					G_rmEdge(n, succ->head);
+					succ = succ->tail;
+				}
+				prev->tail = temp_bg->tail;
+			} else {
+				prev = prev->tail;
+			}
+			temp_bg = temp_bg->tail;
+		}
+		if (nice) {
+			break;
+		}
+	}
+}
+
 int main(int argc, char* argv[]) {
 
     yyparse(); 
@@ -66,6 +92,8 @@ int main(int argc, char* argv[]) {
 		asbl = AS_BlockList(root_block, asbl);
 		// 输出
 		G_nodeList bg = Create_bg(asbl);
+		//delete_nofa_node(bg);
+
 		ssa_form(bg);
 		AS_instrList il = AS_traceSchedule(asbl, prolog, epilog, FALSE);
 		AS_printInstrList(stdout, il, Temp_name());

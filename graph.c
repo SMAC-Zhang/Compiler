@@ -27,6 +27,10 @@ int G_id(G_node n) {
   return n->mykey;
 }
 
+int G_nodecount(G_node n) {
+  return n->mygraph->nodecount;
+}
+
 G_graph G_Graph(void)
 {G_graph g = (G_graph) checked_malloc(sizeof *g);
  g->nodecount = 0;
