@@ -49,6 +49,21 @@ void delete_nofa_node(G_nodeList bg) {
 	}
 }
 
+AS_blockList bg2AS_BlockList(G_nodeList bg) {
+	AS_blockList asbl = NULL, tail = NULL;
+	while (bg) {
+		AS_block asb = G_nodeInfo(bg->head);
+		if (tail == NULL) {
+			asbl = tail = AS_BlockList(asb, NULL);
+		} else {
+			tail->tail = AS_BlockList(asb, NULL);
+			tail = tail->tail;
+		}
+		bg = bg->tail;
+	}
+	return asbl;
+}
+
 int main(int argc, char* argv[]) {
 
     yyparse(); 
@@ -92,10 +107,13 @@ int main(int argc, char* argv[]) {
 		asbl = AS_BlockList(root_block, asbl);
 		// 输出
 		G_nodeList bg = Create_bg(asbl);
-		//delete_nofa_node(bg);
+		//删除孤儿结点后重新建图
+		delete_nofa_node(bg);
+		AS_blockList reasbl = bg2AS_BlockList(bg);
+		G_nodeList rebg = Create_bg(reasbl);
 
-		ssa_form(bg);
-		AS_instrList il = AS_traceSchedule(asbl, prolog, epilog, FALSE);
+		ssa_form(rebg);
+		AS_instrList il = AS_traceSchedule(reasbl, prolog, epilog, FALSE);
 		AS_printInstrList(stdout, il, Temp_name());
 		
 		fl = fl->tail;
