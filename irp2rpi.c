@@ -112,8 +112,11 @@ static Temp_temp munchExp(T_exp e) {
         case T_CALL: {
             munch_args(e->u.CALL.args);
             Temp_temp t = munchExp(e->u.CALL.obj);
+            Temp_temp func = Temp_newtemp();
+            emit(AS_Oper(String_format("ldr %%`d0, [%%`s0]"),
+                Temp_TempList(func, NULL), Temp_TempList(t, NULL), NULL));            
             emit(AS_Oper(String_format("blx %%`s0"),
-                NULL, Temp_TempList(t, NULL), NULL));
+                NULL, Temp_TempList(func, NULL), NULL));
             Temp_temp ret = Temp_newtemp();
             emit(AS_Oper(String_format("mov %%`d0, r0"),
                 Temp_TempList(ret, NULL), NULL, NULL));
