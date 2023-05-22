@@ -245,7 +245,7 @@ static AS_instrList progen(T_funcDecl fl) {
 
 static AS_instrList epigen(Temp_label l) {
     emit(AS_Label(String_format("%s:", Temp_labelstring(l)), l));
-    emit(AS_Oper(String("ret i64 -1"), NULL, NULL, NULL));
+    emit(AS_Oper(String_format("bx %%`s0"), NULL, Temp_TempList(ret_addr, NULL), NULL));
 
     AS_instrList list = iList;
 	iList = last = NULL;
