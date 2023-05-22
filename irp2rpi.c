@@ -225,7 +225,7 @@ static void load_args(Temp_tempList args) {
         args = args->tail;
     }
     while (args) {
-        emit(AS_Oper(String_format("ldr %%`d0, [fp, %d]", -i * 4),
+        emit(AS_Oper(String_format("ldr %%`d0, [fp, %d]", i * 4),
             Temp_TempList(args->head, NULL), NULL, NULL));
         i++;
         args = args->tail;
