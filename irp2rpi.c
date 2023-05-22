@@ -110,11 +110,11 @@ static Temp_temp munchExp(T_exp e) {
             return ret;
         }
         case T_CALL: {
-            munch_args(e->u.CALL.args);
             Temp_temp t = munchExp(e->u.CALL.obj);
             Temp_temp func = Temp_newtemp();
             emit(AS_Oper(String_format("ldr %%`d0, [%%`s0]"),
                 Temp_TempList(func, NULL), Temp_TempList(t, NULL), NULL));            
+            munch_args(e->u.CALL.args);
             emit(AS_Oper(String_format("blx %%`s0"),
                 NULL, Temp_TempList(func, NULL), NULL));
             Temp_temp ret = Temp_newtemp();
@@ -225,7 +225,7 @@ static void load_args(Temp_tempList args) {
         args = args->tail;
     }
     while (args) {
-        emit(AS_Oper(String_format("ldr %%`d0, [fp, %d]", i * 4),
+        emit(AS_Oper(String_format("ldr %%`d0, [fp, %d]", (i + 1) * 4),
             Temp_TempList(args->head, NULL), NULL, NULL));
         i++;
         args = args->tail;
