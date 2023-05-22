@@ -4,7 +4,7 @@
 #include "symbol.h"
 #include "semantic.h"
 
-static int byte_length = 8; // 4 Bytes
+static int byte_length = 4; // 4 Bytes
 extern S_table classTable;
 extern methodEntry mainMethodEntry;
 
