@@ -169,12 +169,14 @@ static void munchStm(T_stm s) {
             break;
         }
         case T_MOVE: {
-            Temp_temp src = munchExp(s->u.MOVE.src);
-            Temp_temp dst = munchExp(s->u.MOVE.dst);
             if (s->u.MOVE.dst->kind == T_MEM) {
+                Temp_temp src = munchExp(s->u.MOVE.src);
+                Temp_temp dst = munchExp(s->u.MOVE.dst->u.MEM);
                 emit(AS_Oper(String_format("str %%`s0, [%%`s1]"),
                     NULL, Temp_TempList(src, Temp_TempList(dst, NULL)), NULL));
             } else {
+                Temp_temp src = munchExp(s->u.MOVE.src);
+                Temp_temp dst = munchExp(s->u.MOVE.dst);
                 emit(AS_Oper(String_format("mov %%`d0, %%`s0"),
                     Temp_TempList(dst, NULL), Temp_TempList(src, NULL), NULL));
             }

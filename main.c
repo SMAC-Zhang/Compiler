@@ -29,7 +29,6 @@ void rpi_show(AS_instr ins) {
 }
 
 int main(int argc, char* argv[]) {
-	FILE* rpi = fopen(argv[1], "w");
     yyparse(); 
     // printA_Prog(stdout, root);
     check_Prog(stderr, root);
@@ -52,7 +51,7 @@ int main(int argc, char* argv[]) {
 		AS_instrList il = AS_traceSchedule(p.bl, p.prolog, p.epilog, TRUE);
 
 		printf("------Final traced StmList---------\n");
-		AS_printInstrList(rpi, il, Temp_name());
+		AS_printInstrList(stdout, il, Temp_name());
 
 		printf("------Instruction level flow graph---------\n");
 		G_graph G=FG_AssemFlowGraph(il);
