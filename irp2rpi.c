@@ -36,20 +36,20 @@ static void munch_binop(Temp_temp ret, T_exp e) {
             Temp_temp origin_left = left, origin_right = right;
             left = Temp_newtemp(); 
             right = Temp_newtemp();
-            emit(AS_Oper(String_format("add `d0, `s0, 0"),
-                Temp_TempList(left, NULL), Temp_TempList(origin_left, NULL), NULL));
-            emit(AS_Oper(String_format("add `d0, `s0, 0"),
-                Temp_TempList(right, NULL), Temp_TempList(origin_right, NULL), NULL));            
+            emit(AS_Move(String_format("mov `d0, `s0"),
+                Temp_TempList(left, NULL), Temp_TempList(origin_left, NULL)));
+            emit(AS_Move(String_format("mov `d0, `s0"),
+                Temp_TempList(right, NULL), Temp_TempList(origin_right, NULL)));            
         } else if (left == ret) {
             Temp_temp origin_left = left;
             left = Temp_newtemp(); 
-            emit(AS_Oper(String_format("add `d0, `s0, 0"),
-                Temp_TempList(left, NULL), Temp_TempList(origin_left, NULL), NULL));
+            emit(AS_Move(String_format("mov `d0, `s0"),
+                Temp_TempList(left, NULL), Temp_TempList(origin_left, NULL)));
         } else if (right == ret) {
             Temp_temp origin_right = right;
             right = Temp_newtemp(); 
-            emit(AS_Oper(String_format("add `d0, `s0, 0"),
-                Temp_TempList(right, NULL), Temp_TempList(origin_right, NULL), NULL));
+            emit(AS_Move(String_format("mov `d0, `s0"),
+                Temp_TempList(right, NULL), Temp_TempList(origin_right, NULL)));
         }
         emit(AS_Oper(String_format("%s `d0, `s0, `s1", op),
             Temp_TempList(ret, NULL), Temp_TempList(left, Temp_TempList(right, NULL)), NULL));
@@ -180,8 +180,8 @@ static void munchStm(T_stm s) {
             } else {
                 Temp_temp src = munchExp(s->u.MOVE.src);
                 Temp_temp dst = munchExp(s->u.MOVE.dst);
-                emit(AS_Oper(String_format("mov `d0, `s0"),
-                    Temp_TempList(dst, NULL), Temp_TempList(src, NULL), NULL));
+                emit(AS_Move(String_format("mov `d0, `s0"),
+                    Temp_TempList(dst, NULL), Temp_TempList(src, NULL)));
             }
             break;
         }
