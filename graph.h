@@ -9,6 +9,20 @@ typedef struct G_node_ *G_node;    /* The "node" type */
 typedef struct G_nodeList_ *G_nodeList;
 struct G_nodeList_ { G_node head; G_nodeList tail;};
 
+struct G_graph_ {int nodecount;
+		 G_nodeList mynodes, mylast;
+	       };
+
+struct G_node_ {
+  G_graph mygraph;
+  int mykey;
+  G_nodeList succs;
+  G_nodeList preds;
+  void *info;
+  bool simplified;
+  int reg;
+};
+
 /* Make a new graph */
 G_graph G_Graph(void); 
 /* Make a new node in graph "g", with associated "info" */
@@ -49,6 +63,7 @@ int outDegree(G_node n);
 int G_degree(G_node n);
 int G_id(G_node n);
 int G_nodecount(G_node n);
+int G_count(G_graph);
 
 /* Get all the successors and predecessors of "n" */
 G_nodeList G_adj(G_node n);

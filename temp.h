@@ -6,6 +6,8 @@
  *
  */
 
+#include <stdio.h>
+
 #include "symbol.h"
 #include "util.h"
 
@@ -42,5 +44,6 @@ int temp_id2name(int id);
 Temp_temp get_temp(int name);
 void set_origin(Temp_temp, int);
 int temp_origin(Temp_temp);
+Temp_temp get_rtemp(int r);
 
 #endif

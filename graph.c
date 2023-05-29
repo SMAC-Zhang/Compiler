@@ -11,24 +11,16 @@
 #include "graph.h"
 #include "table.h"
 
-struct G_graph_ {int nodecount;
-		 G_nodeList mynodes, mylast;
-	       };
-
-struct G_node_ {
-  G_graph mygraph;
-  int mykey;
-  G_nodeList succs;
-  G_nodeList preds;
-  void *info;
-};
-
 int G_id(G_node n) {
   return n->mykey;
 }
 
 int G_nodecount(G_node n) {
   return n->mygraph->nodecount;
+}
+
+int G_count(G_graph g) {
+  return g->nodecount;
 }
 
 G_graph G_Graph(void)
@@ -61,6 +53,8 @@ G_node G_Node(G_graph g, void *info)
  n->succs=NULL;
  n->preds=NULL;
  n->info=info;
+ n->simplified=FALSE;
+ n->reg = -1;
  return n;
 }
 

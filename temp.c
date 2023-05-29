@@ -13,6 +13,8 @@
 #include "temp.h"
 #include "table.h"
 
+#define TEMP_SIZE 4096
+
 struct Temp_temp_ {
   int num;
   int origin;
@@ -23,7 +25,7 @@ string Temp_labelstring(Temp_label s)
 }
 
 static int labels = 0;
-static Temp_temp atemp_map[2048];
+static Temp_temp atemp_map[TEMP_SIZE];
 
 Temp_label Temp_newlabel(void)
 {char buf[100];
@@ -50,6 +52,30 @@ Temp_temp Temp_newtemp(void)
  return p;
 }
 
+void Temp_init() { // 初始化r0 - r3, r8 - r10, lr
+  for (int i = 0; i < 11; ++i) {
+    if (5 <= i && i < 8) {
+      continue;
+    }
+    Temp_temp p = (Temp_temp) checked_malloc(sizeof (*p));
+    p->num = i;
+    p->origin = i;
+    char r[16];
+    sprintf(r, "%d", p->num);
+    Temp_enter(Temp_name(), p, String(r));
+    atemp_map[TEMP_SIZE - 1 - i] = p;
+  }
+}
+
+Temp_temp get_rtemp(int r) { // 获得r0-r3, lr
+  static bool init = FALSE;
+  if (!init) {
+    Temp_init();
+    init = TRUE;
+  }
+  return atemp_map[TEMP_SIZE - 1 - r];
+}
+
 void set_origin(Temp_temp t, int origin) {
   t->origin = origin;
 }
@@ -59,7 +85,11 @@ int temp_num() {
 }
 
 int temp_id(Temp_temp t) {
-  return t->num - 100;
+  if (t->num >= 100) {
+    return t->num - 100;
+  } else {
+    return TEMP_SIZE - 1 - t->num;
+  }
 }
 
 int temp_id2name(int id) {
