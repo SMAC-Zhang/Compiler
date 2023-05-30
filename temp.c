@@ -63,7 +63,7 @@ void Temp_init() { // 初始化r0 - r3, r8 - r10, lr
     char r[16];
     sprintf(r, "%d", p->num);
     Temp_enter(Temp_name(), p, String(r));
-    atemp_map[TEMP_SIZE - 1 - i] = p;
+    atemp_map[TEMP_SIZE - i - 1] = p;
   }
 }
 
@@ -73,7 +73,7 @@ Temp_temp get_rtemp(int r) { // 获得r0-r3, lr
     Temp_init();
     init = TRUE;
   }
-  return atemp_map[TEMP_SIZE - 1 - r];
+  return atemp_map[TEMP_SIZE - r - 1];
 }
 
 void set_origin(Temp_temp t, int origin) {
@@ -85,10 +85,13 @@ int temp_num() {
 }
 
 int temp_id(Temp_temp t) {
+  if (t == NULL) {
+    return -1;
+  }
   if (t->num >= 100) {
     return t->num - 100;
   } else {
-    return TEMP_SIZE - 1 - t->num;
+    return TEMP_SIZE - t->num - 1;
   }
 }
 

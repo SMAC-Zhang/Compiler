@@ -20,6 +20,7 @@ static void init_color(Temp_map coloring) {
     Temp_enter(coloring, get_rtemp(10), String("r10"));
 }
 
+// 计算度数
 static int compute_degree(G_node n) {
     G_nodeList pred = G_pred(n);
     G_nodeList succ = G_succ(n);
@@ -39,10 +40,11 @@ static int compute_degree(G_node n) {
     return degree;
 }
 
+// 简化冲突图
 static Temp_tempList simplified(G_nodeList ig, Temp_tempList stack) {
     while (ig) {
         G_node n = ig->head;
-        if (n->simplified || !n->info) {
+        if (n->simplified) {
             ig = ig->tail;
             continue;
         }
@@ -58,9 +60,10 @@ static Temp_tempList simplified(G_nodeList ig, Temp_tempList stack) {
     return NULL;
 }
 
+// 结点溢出
 static Temp_tempList spill(G_nodeList ig, Temp_tempList spills) {
     G_node spilled = NULL;
-    int degree = 0;
+    int degree = -1;
     while (ig) {
         if (!ig->head->simplified) {
             int d = compute_degree(ig->head);
@@ -80,6 +83,7 @@ static Temp_tempList spill(G_nodeList ig, Temp_tempList spills) {
     return spills;
 }
 
+// 为simple的结点染色
 static void color(Temp_tempList stack, Temp_map coloring) {
     while (stack) {
         bool vis[9] = {0};
@@ -140,6 +144,7 @@ static struct COL_result COL_color(G_nodeList ig) {
     return ret;
 }
 
+// 判断temp是否在spill栈中
 static bool in_spills(Temp_tempList spills, Temp_temp t) {
     while (spills) {
         if (temp_id(spills->head) == temp_id(t)) {
@@ -150,6 +155,7 @@ static bool in_spills(Temp_tempList spills, Temp_temp t) {
     return FALSE;
 }
 
+// 为溢出添加指令
 static int spill_stack;
 static AS_instrList spilled(Temp_map coloring, Temp_tempList spills, AS_instrList il) {
     spill_stack = 10;
@@ -204,8 +210,53 @@ static AS_instrList spilled(Temp_map coloring, Temp_tempList spills, AS_instrLis
     }
 }
 
+// 判断temp是否在冲突图内
+static bool in_ig(G_nodeList ig, Temp_temp t) {
+    while (ig) {
+        if ((Temp_temp)G_nodeInfo(ig->head) == t) {
+            return TRUE;
+        }
+        ig = ig->tail;
+    }
+    return FALSE;
+}
+
+// 将不发生冲突的temp直接改为r0
+static void modify_friend(Temp_map coloring, G_nodeList ig, AS_instrList il) {
+    while (il) {
+        AS_instr asi = il->head;
+        Temp_tempList dst = NULL, src = NULL;
+        if (asi->kind == I_OPER) {
+            dst = asi->u.OPER.dst;
+            src = asi->u.OPER.src;
+        } else if (asi->kind == I_MOVE) {
+            dst = asi->u.MOVE.dst;
+            src = asi->u.MOVE.src;
+        } else {
+            il = il->tail;
+            continue;
+        }
+        while (dst) {
+            if (!in_ig(ig, dst->head)) {
+                Temp_enter(coloring, dst->head, String("r0"));
+            }
+            dst = dst->tail;
+        }
+
+        while (src) {
+            if (!in_ig(ig, src->head)) {
+                Temp_enter(coloring, src->head, String("r0"));
+            }
+            src = src->tail;
+        }
+
+        il = il->tail;
+    }
+}
+
 Temp_map RA_regAlloc(G_nodeList ig, AS_instrList il) {
     struct COL_result cr = COL_color(ig);
-    //AS_instrList ill = spilled(cr.coloring, cr.spills, il);
+    AS_instrList ill = spilled(cr.coloring, cr.spills, il);
+    modify_friend(cr.coloring, ig, il);
     return cr.coloring;
 }

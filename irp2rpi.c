@@ -39,7 +39,7 @@ static void munch_args(T_expList el) {
         Temp_temp t = munchExp(el->head);
         if (i < 4) {
             emit(AS_Move(String_format("mov r%d, `s0", i),
-                Temp_TempList(get_temp(i), NULL), Temp_TempList(t, NULL)));
+                Temp_TempList(get_rtemp(i), NULL), Temp_TempList(t, NULL)));
         } else {
             tl = Temp_TempList(t, tl);
         }
@@ -176,8 +176,8 @@ static void munchStm(T_stm s) {
         }
         case T_RETURN: {
             Temp_temp ret = munchExp(s->u.EXP);
-            emit(AS_Oper(String_format("mov r0, `s0"),
-                Temp_TempList(get_rtemp(0), NULL), Temp_TempList(ret, NULL), NULL));          
+            emit(AS_Move(String_format("mov r0, `s0"),
+                Temp_TempList(get_rtemp(0), NULL), Temp_TempList(ret, NULL)));          
             emit(AS_Oper(String_format("mov sp, fp"),
                 NULL, NULL, NULL));
             emit(AS_Oper(String_format("pop {fp, r4, r5, r6, r7, r8, r9, r10}"),
@@ -205,8 +205,8 @@ static void load_args(Temp_tempList args) {
     int i = 0;
     while (args) {
         if (i < 4) {
-            emit(AS_Oper(String_format("mov `d0, r%d", i),
-                Temp_TempList(args->head, NULL), Temp_TempList(get_rtemp(i), NULL), NULL));
+            emit(AS_Move(String_format("mov `d0, r%d", i),
+                Temp_TempList(args->head, NULL), Temp_TempList(get_rtemp(i), NULL)));
         } else {
             emit(AS_Oper(String_format("ldr `d0, [fp, %d]", (i - 3) * 4),
                 Temp_TempList(args->head, NULL), NULL, NULL));
