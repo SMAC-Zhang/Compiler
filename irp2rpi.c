@@ -53,6 +53,14 @@ static void munch_args(T_expList el) {
     }
 }
 
+static Temp_tempList caller_saved() {
+    Temp_tempList ret = NULL;
+    for (int i = 0; i < 4; ++i) {
+        ret = Temp_TempList(get_rtemp(i), ret);
+    }
+    return ret;
+}
+
 static Temp_temp munchExp(T_exp e) {
     switch (e->kind) {
         case T_BINOP: {
@@ -76,7 +84,7 @@ static Temp_temp munchExp(T_exp e) {
         }
         case T_NAME: {
             Temp_temp ret = Temp_newtemp();
-			emit(AS_Oper(String_format("    ldr `d0, =%s", Temp_labelstring(e->u.NAME)),
+			emit(AS_Oper(String_format("    ldr `d0, %s", Temp_labelstring(e->u.NAME)),
                 Temp_TempList(ret, NULL), NULL, NULL));
             return ret;
         }
@@ -92,7 +100,7 @@ static Temp_temp munchExp(T_exp e) {
             emit(AS_Oper(String_format("    ldr `d0, [`s0]"),
                 Temp_TempList(func, NULL), Temp_TempList(t, NULL), NULL));            
             emit(AS_Oper(String_format("    push {r0, r1, r2, r3}"),
-                NULL, NULL, NULL));                
+                NULL, caller_saved(), NULL));                
             munch_args(e->u.CALL.args);
             emit(AS_Oper(String_format("    blx `s0"),
                 NULL, Temp_TempList(func, NULL), NULL));
@@ -100,12 +108,12 @@ static Temp_temp munchExp(T_exp e) {
             emit(AS_Move(String_format("    mov `d0, r0"),
                 Temp_TempList(ret, NULL), Temp_TempList(get_rtemp(0), NULL)));
             emit(AS_Oper(String_format("    pop {r0, r1, r2, r3}"),
-                NULL, NULL, NULL));                
+                caller_saved(), NULL, NULL));                
 			return ret;
         }
         case T_ExtCALL: {
             emit(AS_Oper(String_format("    push {r0, r1, r2, r3}"),
-                NULL, NULL, NULL));                
+                NULL, caller_saved(), NULL));                
             munch_args(e->u.ExtCALL.args);
             emit(AS_Oper(String_format("    bl %s", e->u.ExtCALL.extfun),
                 NULL, NULL, NULL));
@@ -113,7 +121,7 @@ static Temp_temp munchExp(T_exp e) {
             emit(AS_Move(String_format("    mov `d0, r0"),
                 Temp_TempList(ret, NULL), Temp_TempList(get_rtemp(0), NULL)));
             emit(AS_Oper(String_format("    pop {r0, r1, r2, r3}"),
-                NULL, NULL, NULL));                
+                caller_saved(), NULL, NULL));                
             return ret;
         }
         default: fprintf(stderr, "error in munchExp!"); break;
@@ -128,11 +136,11 @@ static void munchStm(T_stm s) {
 			break;
         }
         case T_LABEL: {
-            emit(AS_Label(String_format("%s:", Temp_labelstring(s->u.LABEL)), s->u.LABEL));
+            emit(AS_Label(String_format(".%s:", Temp_labelstring(s->u.LABEL)), s->u.LABEL));
 			break;
         }
         case T_JUMP: {
-            emit(AS_Oper(String_format("    b =`j0"),
+            emit(AS_Oper(String_format("    b .`j0"),
                 NULL, NULL, AS_Targets(Temp_LabelList(s->u.JUMP.jump, NULL))));
             break;
         }
@@ -150,9 +158,9 @@ static void munchStm(T_stm s) {
                 case T_ge: op = "bge"; break;
                 default: fprintf(stderr, "error in CJUMP!"); break;
             }
-            emit(AS_Oper(String_format("    %s =`j0", op),
-                NULL, NULL,  AS_Targets(Temp_LabelList(s->u.CJUMP.true, NULL)))); 
-            emit(AS_Oper(String_format("    b =`j0"), 
+            emit(AS_Oper(String_format("    %s .`j0", op),
+                NULL, NULL,  AS_Targets(Temp_LabelList(s->u.CJUMP.true, Temp_LabelList(s->u.CJUMP.false, NULL))))); 
+            emit(AS_Oper(String_format("    b .`j0"), 
                 NULL, NULL, AS_Targets(Temp_LabelList(s->u.CJUMP.false, NULL))));
             break;
         }
@@ -178,12 +186,12 @@ static void munchStm(T_stm s) {
             Temp_temp ret = munchExp(s->u.EXP);
             emit(AS_Move(String_format("    mov r0, `s0"),
                 Temp_TempList(get_rtemp(0), NULL), Temp_TempList(ret, NULL)));          
-            emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10}"),
-                NULL, NULL, NULL));
             emit(AS_Oper(String_format("    mov sp, fp"),
                 NULL, NULL, NULL));
             emit(AS_Oper(String_format("    pop {fp}"),
-                NULL, NULL, NULL));            
+                NULL, NULL, NULL)); 
+            emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10}"),
+                NULL, NULL, NULL));           
             emit(AS_Oper(String_format("    bx `s0"),
                 NULL, Temp_TempList(ret_addr, NULL), NULL));          
             break;
@@ -221,28 +229,28 @@ static void load_args(Temp_tempList args) {
 static AS_instrList progen(T_funcDecl fl) {
     emit(AS_Oper(String_format("%s:", fl->name),
         NULL, NULL, NULL));
+    emit(AS_Oper(String_format("    push {r4, r5, r6, r7, r8, r9, r10}"),
+        NULL, NULL, NULL));
     emit(AS_Oper(String_format("    push {fp}"),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    mov fp, sp"),
         NULL, NULL, NULL));
-    emit(AS_Oper(String_format("    push {r4, r5, r6, r7, r8, r9, r10}"),
-        NULL, NULL, NULL));
     load_args(fl->args);
     ret_addr = Temp_newtemp();
-    emit(AS_Move(String_format("    mov `d0, lr"),
-        Temp_TempList(ret_addr, NULL), Temp_TempList(get_rtemp(4), NULL)));    
+    emit(AS_Oper(String_format("    mov `d0, lr"),
+        Temp_TempList(ret_addr, NULL), NULL, NULL));    
     AS_instrList list = iList;
 	iList = last = NULL;
 	return list;
 }
 
 static AS_instrList epigen(Temp_label l) {
-    emit(AS_Label(String_format("%s:", Temp_labelstring(l)), l));      
-    emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10}"),
-        NULL, NULL, NULL));
+    emit(AS_Label(String_format(".%s:", Temp_labelstring(l)), l));
     emit(AS_Oper(String_format("    mov sp, fp"),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    pop {fp}"),
+        NULL, NULL, NULL));     
+    emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10}"),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    bx `s0"), NULL, Temp_TempList(ret_addr, NULL), NULL));
 

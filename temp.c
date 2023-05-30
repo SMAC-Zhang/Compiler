@@ -53,8 +53,8 @@ Temp_temp Temp_newtemp(void)
 }
 
 void Temp_init() { // 初始化r0 - r3, r8 - r10, lr
-  for (int i = 0; i < 11; ++i) {
-    if (5 <= i && i < 8) {
+  for (int i = 0; i <= 11; ++i) {
+    if (4 <= i && i < 8) {
       continue;
     }
     Temp_temp p = (Temp_temp) checked_malloc(sizeof (*p));

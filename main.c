@@ -26,19 +26,21 @@ A_prog root;
 A_prog prog1();
 
 void print_head() {
-	printf(".extern _sysy_stoptime\n");
-	printf(".extern _sysy_starttime\n");
-	printf(".extern putarray\n");
-	printf(".extern putchar\n");
-	printf(".extern putint\n");
-	printf(".extern getarray\n");
-	printf(".extern getch\n");
-	printf(".extern getint\n");
-	printf(".extern malloc\n\n");
-
 	printf(".balign 4\n");
 	printf(".global main\n");
 	printf(".section .text\n\n");
+}
+
+void print_tail() {
+	printf(".global _sysy_stoptime\n");
+	printf(".global _sysy_starttime\n");
+	printf(".global putarray\n");
+	printf(".global putchar\n");
+	printf(".global putint\n");
+	printf(".global getarray\n");
+	printf(".global getch\n");
+	printf(".global getint\n");
+	printf(".global malloc\n\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -58,21 +60,23 @@ int main(int argc, char* argv[]) {
 		G_nodeList bg = Create_bg(p.bl);
 
 		AS_instrList il = AS_traceSchedule(p.bl, p.prolog, p.epilog, TRUE);
-		AS_printInstrList(stdout, il, Temp_name());
+		// AS_printInstrList(stdout, il, Temp_name());
 
 		G_graph G = FG_AssemFlowGraph(il);
 
 		G_nodeList lg = Liveness(G_nodes(G));
 		// 冲突图
 		G_nodeList ig = Create_ig(lg);
-		Show_ig(stdout, ig);
+		// Show_ig(stdout, ig);
 
 		Temp_map coloring = RA_regAlloc(ig, il);
 
-		//AS_printInstrList(stdout, il, coloring);
+		AS_printInstrList(stdout, il, coloring);
 
 		fl = fl->tail;
     }
+
+	print_tail();
 
     return 0;
 }

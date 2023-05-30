@@ -10,14 +10,16 @@ struct COL_result {
 };
 
 static void init_color(Temp_map coloring) {
-    Temp_enter(coloring, get_rtemp(0), String("r0"));
-    Temp_enter(coloring, get_rtemp(1), String("r1"));
-    Temp_enter(coloring, get_rtemp(2), String("r2"));
-    Temp_enter(coloring, get_rtemp(3), String("r3"));
-    Temp_enter(coloring, get_rtemp(4), String("lr"));
-    Temp_enter(coloring, get_rtemp(8), String("r8"));
-    Temp_enter(coloring, get_rtemp(9), String("r9"));
-    Temp_enter(coloring, get_rtemp(10), String("r10"));
+    for (int i = 0; i < 4; ++i) {
+        Temp_temp t = get_rtemp(i);
+        Temp_enter(coloring, t, String_format("r%d", i));
+        G_node n = Look_ig(t);
+        n->reg = i;
+    }
+    for (int i = 8; i <= 10; ++i) {
+        Temp_temp t = get_rtemp(i);
+        Temp_enter(coloring, t, String_format("r%d", i));
+    }
 }
 
 // 计算度数
@@ -65,7 +67,7 @@ static Temp_tempList spill(G_nodeList ig, Temp_tempList spills) {
     G_node spilled = NULL;
     int degree = -1;
     while (ig) {
-        if (!ig->head->simplified) {
+        if (!ig->head->simplified && ig->head->reg == -1) {
             int d = compute_degree(ig->head);
             if (degree < d) {
                 degree = d;
@@ -86,8 +88,12 @@ static Temp_tempList spill(G_nodeList ig, Temp_tempList spills) {
 // 为simple的结点染色
 static void color(Temp_tempList stack, Temp_map coloring) {
     while (stack) {
-        bool vis[9] = {0};
+        bool vis[8] = {0};
         G_node n = Look_ig(stack->head);
+        if (n->reg != -1) {
+            stack = stack->tail;
+            continue;
+        }
         G_nodeList pred = G_pred(n);
         G_nodeList succ = G_succ(n);
         while (pred) {
@@ -120,11 +126,13 @@ static struct COL_result COL_color(G_nodeList ig) {
     init_color(coloring);
     Temp_tempList stack = NULL, spills = NULL;
 
+    int count = G_nodecount(ig->head);
     while (TRUE) {
         while (TRUE) {
             Temp_tempList new_stack = simplified(ig, stack);
             if (new_stack) {
                 stack = new_stack;
+                count--;
             } else {
                 break;
             }
@@ -132,11 +140,12 @@ static struct COL_result COL_color(G_nodeList ig) {
         Temp_tempList new_spills = spill(ig, spills);
         if (new_spills) {
             spills = new_spills;
+            count--;
         } else {
             break;
         }
-        
     }
+    assert(count == 0);
 
     color(stack, coloring);
 
@@ -156,10 +165,26 @@ static bool in_spills(Temp_tempList spills, Temp_temp t) {
 }
 
 // 为溢出添加指令
-static int spill_stack;
 static AS_instrList spilled(Temp_map coloring, Temp_tempList spills, AS_instrList il) {
-    spill_stack = 10;
+    // 为spill变量预留位置
+    Temp_tempList t_spills = spills;
+    int spill_stack = 0;
+    while (t_spills) {
+        Look_ig(t_spills->head)->reg = spill_stack++;
+        t_spills = t_spills->tail;
+    }
+
+    // 移动栈指针
     AS_instrList pre = il;
+    for (int i = 0; i < 3; ++i) {
+        il = il->tail;
+        if (pre->tail != il) {
+            pre = pre->tail;
+        }
+    }
+    il->tail = AS_InstrList(AS_Oper(String_format("    add sp, sp, #%d", -spill_stack * 4), NULL, NULL, NULL), il->tail);
+
+    // 添加指令
     while (il) {
         AS_instr asi = il->head;
         Temp_tempList dst = NULL, src = NULL;
@@ -169,44 +194,35 @@ static AS_instrList spilled(Temp_map coloring, Temp_tempList spills, AS_instrLis
         } else if (asi->kind == I_MOVE) {
             dst = asi->u.MOVE.dst;
             src = asi->u.MOVE.src;
-        } else {
-            il = il->tail;
-            continue;
         }
+        
         int reg = 8;
-        int dest = 0;
         while (dst) {
             if (in_spills(spills, dst->head)) {
+                G_node dst_n = Look_ig(dst->head);
                 dst->head = get_rtemp(reg);
-                il->tail = AS_InstrList(AS_Oper(String_format("push {r%d}", reg), NULL, NULL, NULL), il->tail);
-                Look_ig(dst->head)->reg = spill_stack++;
+                il->tail = AS_InstrList(AS_Oper(String_format("    str r%d, [sp, #%d]", reg, (dst_n->reg + 1) * 4), NULL, NULL, NULL), il->tail);
                 reg++;
-                dest++;
             }
             dst = dst->tail;
         }
 
         while (src) {
             if (in_spills(spills, src->head)) {
-                G_node src_n = Look_ig(src->head); 
-                AS_instr pop = AS_Oper(String_format("ldr r%d, [sp, %d]", reg, (spill_stack - src_n->reg) * 4), NULL, NULL, NULL);
+                G_node src_n = Look_ig(src->head);
+                AS_instr pop = AS_Oper(String_format("    ldr r%d, [sp, #%d]", reg, (src_n->reg + 1) * 4), NULL, NULL, NULL);
                 src->head = get_rtemp(reg);
-                AS_instr push = AS_Oper(String_format("str r%d, [sp, %d]", reg, (spill_stack - src_n->reg) * 4), NULL, NULL, NULL);
+                AS_instr push = AS_Oper(String_format("    str r%d, [sp, #%d]", reg, (src_n->reg + 1) * 4), NULL, NULL, NULL);
                 assert(pre != il);
                 pre->tail = AS_InstrList(pop, il);
                 pre = pre->tail;
                 il->tail = AS_InstrList(push, il->tail);
                 reg++;
-                dest++;
             }
             src = src->tail;
         }
-        while (dest--) {
-            pre = pre->tail;
-            il = il->tail;
-        }
-        il = il->tail;
         pre = pre->tail;
+        il = il->tail;
     }
 }
 
