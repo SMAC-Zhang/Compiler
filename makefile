@@ -2,12 +2,12 @@ TESTCASE_DIR := tests
 FMJ_TESTCASES = $(wildcard $(TESTCASE_DIR)/*.fmj)
 C_TESTCASES = $(wildcard $(TESTCASE_DIR)/*.c)
 
-testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.output, $(FMJ_TESTCASES))
+testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.s, $(FMJ_TESTCASES))
 #testline: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.line, $(FMJ_TESTCASES))
 
-$(TESTCASE_DIR)/%.output: $(TESTCASE_DIR)/%.fmj main
+$(TESTCASE_DIR)/%.s: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
-	@./main < $< > $(TESTCASE_DIR)/$*.output
+	@./main < $< > $(TESTCASE_DIR)/$*.s
 
 # $(TESTCASE_DIR)/%.line: $(TESTCASE_DIR)/%.fmj main
 # 	@echo TEST $*
@@ -116,10 +116,10 @@ regalloc.o: regalloc.c regalloc.h
 	@cc -g -c regalloc.c
 
 clean: 
-	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.ll $(TESTCASE_DIR)/*.rpi $(TESTCASE_DIR)/*.graph
+	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.out $(TESTCASE_DIR)/*.s $(TESTCASE_DIR)/*.ll $(TESTCASE_DIR)/*.rpi $(TESTCASE_DIR)/*.graph
 
 bclean:
 	rm -f *.o main y.output lib.ll
 
 fclean:
-	rm -f $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.rpi $(TESTCASE_DIR)/*.graph
+	rm -f  $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.s $(TESTCASE_DIR)/*.rpi $(TESTCASE_DIR)/*.graph

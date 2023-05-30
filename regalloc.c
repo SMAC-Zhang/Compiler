@@ -257,6 +257,6 @@ static void modify_friend(Temp_map coloring, G_nodeList ig, AS_instrList il) {
 Temp_map RA_regAlloc(G_nodeList ig, AS_instrList il) {
     struct COL_result cr = COL_color(ig);
     AS_instrList ill = spilled(cr.coloring, cr.spills, il);
-    modify_friend(cr.coloring, ig, il);
+    //modify_friend(cr.coloring, ig, il);
     return cr.coloring;
 }
