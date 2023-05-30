@@ -165,8 +165,8 @@ static void munchStm(T_stm s) {
                 case T_ge: op = "bge"; break;
                 default: fprintf(stderr, "error in CJUMP!"); break;
             }
-            emit(AS_Oper(String_format("%s `j0", op),
-                NULL, NULL,  AS_Targets(Temp_LabelList(s->u.CJUMP.true, NULL)))); 
+            emit(AS_Oper(String_format("%s %s", op, Temp_labelstring(s->u.CJUMP.true)),
+                NULL, NULL,  NULL)); 
             emit(AS_Oper(String_format("b `j0"), 
                 NULL, NULL, AS_Targets(Temp_LabelList(s->u.CJUMP.false, NULL))));
             break;
