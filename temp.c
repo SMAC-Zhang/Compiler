@@ -52,11 +52,8 @@ Temp_temp Temp_newtemp(void)
  return p;
 }
 
-void Temp_init() { // 初始化r0 - r3, r8 - r10, lr
+void Temp_init() { // 初始化r0 - r10, lr
   for (int i = 0; i <= 11; ++i) {
-    if (4 <= i && i < 8) {
-      continue;
-    }
     Temp_temp p = (Temp_temp) checked_malloc(sizeof (*p));
     p->num = i;
     p->origin = i;
@@ -67,7 +64,7 @@ void Temp_init() { // 初始化r0 - r3, r8 - r10, lr
   }
 }
 
-Temp_temp get_rtemp(int r) { // 获得r0-r3, lr
+Temp_temp get_rtemp(int r) { // 获得r0-r10, lr
   static bool init = FALSE;
   if (!init) {
     Temp_init();

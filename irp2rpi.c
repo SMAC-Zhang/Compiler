@@ -61,6 +61,14 @@ static Temp_tempList caller_saved() {
     return ret;
 }
 
+static Temp_tempList callee_saved() {
+    Temp_tempList ret = NULL;
+    for (int i = 4; i <= 11; ++i) {
+        ret = Temp_TempList(get_rtemp(i), ret);
+    }
+    return ret;
+}
+
 static Temp_temp munchExp(T_exp e) {
     switch (e->kind) {
         case T_BINOP: {
@@ -84,7 +92,7 @@ static Temp_temp munchExp(T_exp e) {
         }
         case T_NAME: {
             Temp_temp ret = Temp_newtemp();
-			emit(AS_Oper(String_format("    ldr `d0, %s", Temp_labelstring(e->u.NAME)),
+			emit(AS_Oper(String_format("    ldr `d0, =%s", Temp_labelstring(e->u.NAME)),
                 Temp_TempList(ret, NULL), NULL, NULL));
             return ret;
         }
@@ -99,29 +107,21 @@ static Temp_temp munchExp(T_exp e) {
             Temp_temp func = Temp_newtemp();
             emit(AS_Oper(String_format("    ldr `d0, [`s0]"),
                 Temp_TempList(func, NULL), Temp_TempList(t, NULL), NULL));            
-            emit(AS_Oper(String_format("    push {r0, r1, r2, r3}"),
-                NULL, caller_saved(), NULL));                
             munch_args(e->u.CALL.args);
             emit(AS_Oper(String_format("    blx `s0"),
-                NULL, Temp_TempList(func, NULL), NULL));
+                caller_saved(), Temp_TempList(func, caller_saved()), NULL));
             Temp_temp ret = Temp_newtemp();
             emit(AS_Move(String_format("    mov `d0, r0"),
                 Temp_TempList(ret, NULL), Temp_TempList(get_rtemp(0), NULL)));
-            emit(AS_Oper(String_format("    pop {r0, r1, r2, r3}"),
-                caller_saved(), NULL, NULL));                
 			return ret;
         }
         case T_ExtCALL: {
-            emit(AS_Oper(String_format("    push {r0, r1, r2, r3}"),
-                NULL, caller_saved(), NULL));                
             munch_args(e->u.ExtCALL.args);
             emit(AS_Oper(String_format("    bl %s", e->u.ExtCALL.extfun),
-                NULL, NULL, NULL));
+                caller_saved(), caller_saved(), NULL));
             Temp_temp ret = Temp_newtemp();
             emit(AS_Move(String_format("    mov `d0, r0"),
                 Temp_TempList(ret, NULL), Temp_TempList(get_rtemp(0), NULL)));
-            emit(AS_Oper(String_format("    pop {r0, r1, r2, r3}"),
-                caller_saved(), NULL, NULL));                
             return ret;
         }
         default: fprintf(stderr, "error in munchExp!"); break;
@@ -190,10 +190,10 @@ static void munchStm(T_stm s) {
                 NULL, NULL, NULL));
             emit(AS_Oper(String_format("    pop {fp}"),
                 NULL, NULL, NULL)); 
-            emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10}"),
-                NULL, NULL, NULL));           
-            emit(AS_Oper(String_format("    bx `s0"),
-                NULL, Temp_TempList(ret_addr, NULL), NULL));          
+            emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10, lr}"),
+                callee_saved(), NULL, NULL));           
+            emit(AS_Oper(String_format("    bx lr"),
+                NULL, Temp_TempList(get_rtemp(11), NULL), NULL));          
             break;
         }
         default: fprintf(stderr, "error in munchStm!"); break;
@@ -229,16 +229,13 @@ static void load_args(Temp_tempList args) {
 static AS_instrList progen(T_funcDecl fl) {
     emit(AS_Oper(String_format("%s:", fl->name),
         NULL, NULL, NULL));
-    emit(AS_Oper(String_format("    push {r4, r5, r6, r7, r8, r9, r10}"),
-        NULL, NULL, NULL));
+    emit(AS_Oper(String_format("    push {r4, r5, r6, r7, r8, r9, r10, lr}"),
+        NULL, callee_saved(), NULL));
     emit(AS_Oper(String_format("    push {fp}"),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    mov fp, sp"),
         NULL, NULL, NULL));
     load_args(fl->args);
-    ret_addr = Temp_newtemp();
-    emit(AS_Oper(String_format("    mov `d0, lr"),
-        Temp_TempList(ret_addr, NULL), NULL, NULL));    
     AS_instrList list = iList;
 	iList = last = NULL;
 	return list;
@@ -250,9 +247,9 @@ static AS_instrList epigen(Temp_label l) {
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    pop {fp}"),
         NULL, NULL, NULL));     
-    emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10}"),
-        NULL, NULL, NULL));
-    emit(AS_Oper(String_format("    bx `s0"), NULL, Temp_TempList(ret_addr, NULL), NULL));
+    emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10, lr}"),
+        callee_saved(), NULL, NULL));
+    emit(AS_Oper(String_format("    bx lr"), NULL, NULL, NULL));
 
     AS_instrList list = iList;
 	iList = last = NULL;
