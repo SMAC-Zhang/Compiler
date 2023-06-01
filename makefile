@@ -116,7 +116,7 @@ regalloc.o: regalloc.c regalloc.h
 	@cc -g -c regalloc.c
 
 clean: 
-	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.output $(TESTCASE_DIR)/*.out $(TESTCASE_DIR)/*.s $(TESTCASE_DIR)/*.ll $(TESTCASE_DIR)/*.rpi $(TESTCASE_DIR)/*.graph
+	rm -f *.o main y.output lib.ll $(TESTCASE_DIR)/*.out $(TESTCASE_DIR)/*.s $(TESTCASE_DIR)/*.ll $(TESTCASE_DIR)/qemu*
 
 bclean:
 	rm -f *.o main y.output lib.ll

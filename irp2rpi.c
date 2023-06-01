@@ -191,7 +191,7 @@ static void munchStm(T_stm s) {
             emit(AS_Oper(String_format("    pop {fp}"),
                 NULL, NULL, NULL)); 
             emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10, lr}"),
-                callee_saved(), NULL, NULL));           
+                NULL, NULL, NULL));           
             emit(AS_Oper(String_format("    bx lr"),
                 NULL, Temp_TempList(get_rtemp(11), NULL), NULL));          
             break;
@@ -230,7 +230,7 @@ static AS_instrList progen(T_funcDecl fl) {
     emit(AS_Oper(String_format("%s:", fl->name),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    push {r4, r5, r6, r7, r8, r9, r10, lr}"),
-        NULL, callee_saved(), NULL));
+        NULL, NULL, NULL));
     emit(AS_Oper(String_format("    push {fp}"),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    mov fp, sp"),
@@ -248,7 +248,7 @@ static AS_instrList epigen(Temp_label l) {
     emit(AS_Oper(String_format("    pop {fp}"),
         NULL, NULL, NULL));     
     emit(AS_Oper(String_format("    pop {r4, r5, r6, r7, r8, r9, r10, lr}"),
-        callee_saved(), NULL, NULL));
+        NULL, NULL, NULL));
     emit(AS_Oper(String_format("    bx lr"), NULL, NULL, NULL));
 
     AS_instrList list = iList;

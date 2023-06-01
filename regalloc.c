@@ -195,31 +195,30 @@ static AS_instrList spilled(Temp_map coloring, Temp_tempList spills, AS_instrLis
             dst = asi->u.MOVE.dst;
             src = asi->u.MOVE.src;
         }
-        
+
         int reg = 8;
+        int dest = 0;
+        while (src) {
+            if (in_spills(spills, src->head)) {
+                G_node src_n = Look_ig(src->head);
+                AS_instr pop = AS_Oper(String_format("    ldr r%d, [sp, #%d]", reg, (src_n->reg) * 4), NULL, NULL, NULL);
+                src->head = get_rtemp(reg);
+                assert(pre != il);
+                pre->tail = AS_InstrList(pop, il);
+                pre = pre->tail;
+                reg++;
+            }
+            src = src->tail;
+        }
+
         while (dst) {
             if (in_spills(spills, dst->head)) {
                 G_node dst_n = Look_ig(dst->head);
                 dst->head = get_rtemp(reg);
-                il->tail = AS_InstrList(AS_Oper(String_format("    str r%d, [sp, #%d]", reg, (dst_n->reg + 1) * 4), NULL, NULL, NULL), il->tail);
+                il->tail = AS_InstrList(AS_Oper(String_format("    str r%d, [sp, #%d]", reg, (dst_n->reg) * 4), NULL, NULL, NULL), il->tail);
                 reg++;
             }
             dst = dst->tail;
-        }
-
-        while (src) {
-            if (in_spills(spills, src->head)) {
-                G_node src_n = Look_ig(src->head);
-                AS_instr pop = AS_Oper(String_format("    ldr r%d, [sp, #%d]", reg, (src_n->reg + 1) * 4), NULL, NULL, NULL);
-                src->head = get_rtemp(reg);
-                AS_instr push = AS_Oper(String_format("    str r%d, [sp, #%d]", reg, (src_n->reg + 1) * 4), NULL, NULL, NULL);
-                assert(pre != il);
-                pre->tail = AS_InstrList(pop, il);
-                pre = pre->tail;
-                il->tail = AS_InstrList(push, il->tail);
-                reg++;
-            }
-            src = src->tail;
         }
         pre = pre->tail;
         il = il->tail;
