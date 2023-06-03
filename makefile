@@ -8,6 +8,8 @@ testfmj: $(patsubst $(TESTCASE_DIR)/%.fmj, $(TESTCASE_DIR)/%.s, $(FMJ_TESTCASES)
 $(TESTCASE_DIR)/%.s: $(TESTCASE_DIR)/%.fmj main
 	@echo TEST $*
 	@./main < $< > $(TESTCASE_DIR)/$*.s
+	@arm-linux-gnueabihf-gcc -mcpu=cortex-a72 $(TESTCASE_DIR)/$*.s $(TESTCASE_DIR)/libsysy.a --static -o $(TESTCASE_DIR)/$*.out 
+	@qemu-arm -B 0x1000 $(TESTCASE_DIR)/$*.out; echo $$?
 
 # $(TESTCASE_DIR)/%.line: $(TESTCASE_DIR)/%.fmj main
 # 	@echo TEST $*

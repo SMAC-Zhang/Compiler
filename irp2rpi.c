@@ -243,6 +243,8 @@ static AS_instrList progen(T_funcDecl fl) {
 
 static AS_instrList epigen(Temp_label l) {
     emit(AS_Label(String_format(".%s:", Temp_labelstring(l)), l));
+    emit(AS_Oper(String_format("    mov r0, #0"),
+        Temp_TempList(get_rtemp(0), NULL), NULL, NULL));
     emit(AS_Oper(String_format("    mov sp, fp"),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    pop {fp}"),

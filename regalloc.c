@@ -126,7 +126,10 @@ static struct COL_result COL_color(G_nodeList ig) {
     init_color(coloring);
     Temp_tempList stack = NULL, spills = NULL;
 
-    int count = G_nodecount(ig->head);
+    int count = 0;
+    if (ig) { 
+        count = G_nodecount(ig->head);
+    }
     while (TRUE) {
         while (TRUE) {
             Temp_tempList new_stack = simplified(ig, stack);
