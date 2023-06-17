@@ -4,7 +4,7 @@
 
 ## 1、词法 & 语法分析
 
-1、使用`Lexer`进行词法分析。代码在[`lexer.lex`](./src/lexer/lex)中。
+1、使用`Lexer`进行词法分析。代码在[`lexer.lex`](./src/lexer.lex)中。
 
 简单地使用正则表达式匹配各个token并返回， 同时处理好`pos`信息，便于后续的报错。对于常数，用了一个`calc()`的辅助函数进行计算， 就是简单的遍历字符串转换为数字然后返回，由于常数不能有先导0，所以单独对0进行了处理。
 
@@ -144,7 +144,7 @@ classTable ---├── classEntry2 ---├── varTable   ---├── offset 
 
 5、每个函数入口使用`prolog()`添加指令，出口使用函数`epilog()`添加指令，对于`llvm ir`, `prolog()`中只需要定义函数名和参数列表即可, `epilog()`只需要使用`ret`指令返回即可。`arm`则需要按第四点所说的进行一些处理。
 
-6、两种"机器码"所对应的覆盖分别在[llvm ir tiles](./llvm_ir_tiles.png)和[arm tiles](./arm_tiles.png)中。
+6、两种"机器码"所对应的覆盖分别在[llvm ir tiles](./images/llvm_ir_tiles.png)和[arm tiles](./images/arm_tiles.png)中。
 
 
 
@@ -180,7 +180,7 @@ classTable ---├── classEntry2 ---├── varTable   ---├── offset 
 
 实现静态单赋值形式的代码主要思路是，将被赋值多次的变量重命名为不同名字的变量，同时对这些变量的使用也需要对应修改。具体使用phi函数实现。如下图所示：
 
-<img src="C:\Users\smaczhang\Desktop\Compile\Compiler\ssa1.png" alt="ssa1" style="zoom: 67%;" /><img src="C:\Users\smaczhang\Desktop\Compile\Compiler\ssa2.png" alt="ssa2" style="zoom:60%;" />
+<img src="./images/ssa1.png" alt="ssa1" style="zoom: 67%;" /><img src="./images/ssa2.png" alt="ssa2" style="zoom:60%;" />
 
 1、实现`SSA`涉及到大量集合求交求并的操作，因此，我使用了类似于`Bitmap`的形式来维护每个变量或结点的存在与否。通过增加空间复杂度，大大减少了时间复杂度。
 
