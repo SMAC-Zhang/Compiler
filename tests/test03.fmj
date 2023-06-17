@@ -1,0 +1,13 @@
+public int main() {
+  int[] a={4, 3, 2, 1, 0};
+  int i=0;
+  int m=-100;
+  int l;
+  
+  l=length(a);
+  while (l>i) {
+    if (a[i]>m) m=a[i];
+    i=i+1;
+  }
+  return m;
+}

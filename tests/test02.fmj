@@ -1,0 +1,8 @@
+public int main() {
+  int a=0;
+  int b;
+  int c=0;
+
+  while (({b=a+1; c=c+b; a=b*2;} a) < 10) ;
+  return c;
+}
