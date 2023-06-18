@@ -2,9 +2,6 @@
 
 static AS_instrList iList, last;
 static Temp_temp ret_addr;
-static AS_instrList codegen(T_stmList stmList);
-static AS_instrList progen(T_funcDecl fl);
-static AS_instrList epigen(Temp_label tl);
 static Temp_temp munchExp(T_exp e);
 static void munchStm(T_stm s);
 static void emit(AS_instr inst);
@@ -200,7 +197,7 @@ static void munchStm(T_stm s) {
     }
 }
 
-static AS_instrList codegen(T_stmList stmList) {
+AS_instrList codegen(T_stmList stmList) {
     AS_instrList list = NULL;
     T_stmList sl;
     for (sl = stmList; sl; sl = sl->tail) {
@@ -226,7 +223,7 @@ static void load_args(Temp_tempList args) {
     }
 }
 
-static AS_instrList progen(T_funcDecl fl) {
+AS_instrList progen(T_funcDecl fl) {
     emit(AS_Oper(String_format("%s:", fl->name),
         NULL, NULL, NULL));
     emit(AS_Oper(String_format("    push {r4, r5, r6, r7, r8, r9, r10, lr}"),
@@ -241,7 +238,7 @@ static AS_instrList progen(T_funcDecl fl) {
 	return list;
 }
 
-static AS_instrList epigen(Temp_label l) {
+AS_instrList epigen(Temp_label l) {
     emit(AS_Label(String_format(".%s:", Temp_labelstring(l)), l));
     emit(AS_Oper(String_format("    mov r0, #0"),
         Temp_TempList(get_rtemp(0), NULL), NULL, NULL));

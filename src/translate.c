@@ -4,7 +4,13 @@
 #include "symbol.h"
 #include "semantic.h"
 
-static int byte_length = 4; // 4 Bytes
+// arm字长为4B, llvm ir 为8B
+#ifdef LLVM
+static int byte_length = 8;
+#else
+static int byte_length = 4;
+#endif
+
 extern S_table classTable;
 extern methodEntry mainMethodEntry;
 

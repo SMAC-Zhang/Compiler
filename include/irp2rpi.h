@@ -23,6 +23,8 @@
 
 struct AS_prog {AS_instrList prolog, epilog; AS_blockList bl;};
 
-struct AS_prog irp2rpi(struct C_block, T_funcDecl);
+AS_instrList codegen(T_stmList);
+AS_instrList progen(T_funcDecl);
+AS_instrList epigen(Temp_label);
 
 #endif

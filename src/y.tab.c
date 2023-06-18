@@ -67,7 +67,7 @@
 
 
 /* First part of user prologue.  */
-#line 1 "parser.yacc"
+#line 1 "./src/parser.yacc"
 
 #include <stdio.h>
 #include <string.h>
@@ -84,7 +84,7 @@ extern int  yywrap();
 // extern int yydebug = 1;
 
 
-#line 88 "y.tab.c"
+#line 88 "src/y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -107,161 +107,7 @@ extern int  yywrap();
 #  endif
 # endif
 
-/* Use api.header.include to #include this header
-   instead of duplicating it here.  */
-#ifndef YY_YY_Y_TAB_H_INCLUDED
-# define YY_YY_Y_TAB_H_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
-
-/* Token kinds.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    YYEMPTY = -2,
-    YYEOF = 0,                     /* "end of file"  */
-    YYerror = 256,                 /* error  */
-    YYUNDEF = 257,                 /* "invalid token"  */
-    OP_PLUS = 258,                 /* OP_PLUS  */
-    OP_MULTIPLY = 259,             /* OP_MULTIPLY  */
-    OP_MINUS = 260,                /* OP_MINUS  */
-    OP_DIV = 261,                  /* OP_DIV  */
-    UMINUS = 262,                  /* UMINUS  */
-    OR = 263,                      /* OR  */
-    AND = 264,                     /* AND  */
-    LESS = 265,                    /* LESS  */
-    LE = 266,                      /* LE  */
-    EQ = 267,                      /* EQ  */
-    NOT = 268,                     /* NOT  */
-    GREATER = 269,                 /* GREATER  */
-    GE = 270,                      /* GE  */
-    NEQ = 271,                     /* NEQ  */
-    BRACE = 272,                   /* BRACE  */
-    BRACKET = 273,                 /* BRACKET  */
-    PARENTHESIS = 274,             /* PARENTHESIS  */
-    PUBLIC = 275,                  /* PUBLIC  */
-    INT = 276,                     /* INT  */
-    MAIN = 277,                    /* MAIN  */
-    CLASS = 278,                   /* CLASS  */
-    EXTENDS = 279,                 /* EXTENDS  */
-    IF = 280,                      /* IF  */
-    ELSE = 281,                    /* ELSE  */
-    WHILE = 282,                   /* WHILE  */
-    CONTINUE = 283,                /* CONTINUE  */
-    BREAK = 284,                   /* BREAK  */
-    RETURN = 285,                  /* RETURN  */
-    PUTINT = 286,                  /* PUTINT  */
-    PUTCH = 287,                   /* PUTCH  */
-    PUTARRAY = 288,                /* PUTARRAY  */
-    GETINT = 289,                  /* GETINT  */
-    GETCH = 290,                   /* GETCH  */
-    GETARRAY = 291,                /* GETARRAY  */
-    STARTTIME = 292,               /* STARTTIME  */
-    STOPTIME = 293,                /* STOPTIME  */
-    True = 294,                    /* True  */
-    False = 295,                   /* False  */
-    LENGTH = 296,                  /* LENGTH  */
-    THIS = 297,                    /* THIS  */
-    NEW = 298,                     /* NEW  */
-    INT_CONST = 299,               /* INT_CONST  */
-    IDENTIFIER = 300               /* IDENTIFIER  */
-  };
-  typedef enum yytokentype yytoken_kind_t;
-#endif
-/* Token kinds.  */
-#define YYEMPTY -2
-#define YYEOF 0
-#define YYerror 256
-#define YYUNDEF 257
-#define OP_PLUS 258
-#define OP_MULTIPLY 259
-#define OP_MINUS 260
-#define OP_DIV 261
-#define UMINUS 262
-#define OR 263
-#define AND 264
-#define LESS 265
-#define LE 266
-#define EQ 267
-#define NOT 268
-#define GREATER 269
-#define GE 270
-#define NEQ 271
-#define BRACE 272
-#define BRACKET 273
-#define PARENTHESIS 274
-#define PUBLIC 275
-#define INT 276
-#define MAIN 277
-#define CLASS 278
-#define EXTENDS 279
-#define IF 280
-#define ELSE 281
-#define WHILE 282
-#define CONTINUE 283
-#define BREAK 284
-#define RETURN 285
-#define PUTINT 286
-#define PUTCH 287
-#define PUTARRAY 288
-#define GETINT 289
-#define GETCH 290
-#define GETARRAY 291
-#define STARTTIME 292
-#define STOPTIME 293
-#define True 294
-#define False 295
-#define LENGTH 296
-#define THIS 297
-#define NEW 298
-#define INT_CONST 299
-#define IDENTIFIER 300
-
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
-{
-#line 19 "parser.yacc"
-
-    A_pos token;
-    string id;
-    A_prog prog;
-    A_mainMethod main;
-    A_stm stm;
-	A_stmList stmlist;
-	A_varDecl var;
-	A_varDeclList varlist;
-	A_classDecl classdec;
-	A_classDeclList classdeclist;
-	A_methodDecl method;
-	A_methodDeclList methodlist;
-	A_formalList formallist;
-    A_exp exp;
-	A_expList explist;
-	A_type type;
-
-#line 250 "y.tab.c"
-
-};
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
-#endif
-
-
-extern YYSTYPE yylval;
-
-
-int yyparse (void);
-
-
-#endif /* !YY_YY_Y_TAB_H_INCLUDED  */
+#include "y.tab.h"
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -1524,640 +1370,640 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* PROG: MAIN_METHOD CLASS_DEC_LIST  */
-#line 89 "parser.yacc"
+#line 89 "./src/parser.yacc"
         {
 		root = A_Prog((yyvsp[-1].main)->pos, (yyvsp[-1].main), (yyvsp[0].classdeclist));
 		(yyval.prog) = A_Prog((yyvsp[-1].main)->pos, (yyvsp[-1].main), (yyvsp[0].classdeclist));
 	}
-#line 1533 "y.tab.c"
+#line 1379 "src/y.tab.c"
     break;
 
   case 3: /* MAIN_METHOD: PUBLIC INT MAIN PARENTHESIS ')' BRACE VAR_LIST STM_LIST '}'  */
-#line 95 "parser.yacc"
+#line 95 "./src/parser.yacc"
         {
 		(yyval.main) = A_MainMethod((yyvsp[-8].token), (yyvsp[-2].varlist), (yyvsp[-1].stmlist));
 	}
-#line 1541 "y.tab.c"
+#line 1387 "src/y.tab.c"
     break;
 
   case 4: /* CLASS_DEC: PUBLIC CLASS IDENTIFIER BRACE VAR_LIST METHOD_LIST '}'  */
-#line 101 "parser.yacc"
+#line 101 "./src/parser.yacc"
         {
 		(yyval.classdec) = A_ClassDecl((yyvsp[-6].token), (yyvsp[-4].id), NULL, (yyvsp[-2].varlist), (yyvsp[-1].methodlist));
 	}
-#line 1549 "y.tab.c"
+#line 1395 "src/y.tab.c"
     break;
 
   case 5: /* CLASS_DEC: PUBLIC CLASS IDENTIFIER EXTENDS IDENTIFIER BRACE VAR_LIST METHOD_LIST '}'  */
-#line 106 "parser.yacc"
+#line 106 "./src/parser.yacc"
         {
 		(yyval.classdec) = A_ClassDecl((yyvsp[-8].token), (yyvsp[-6].id), (yyvsp[-4].id), (yyvsp[-2].varlist), (yyvsp[-1].methodlist));
 	}
-#line 1557 "y.tab.c"
+#line 1403 "src/y.tab.c"
     break;
 
   case 6: /* CLASS_DEC_LIST: CLASS_DEC CLASS_DEC_LIST  */
-#line 112 "parser.yacc"
+#line 112 "./src/parser.yacc"
         {
 		(yyval.classdeclist) = A_ClassDeclList((yyvsp[-1].classdec), (yyvsp[0].classdeclist));
 	}
-#line 1565 "y.tab.c"
+#line 1411 "src/y.tab.c"
     break;
 
   case 7: /* CLASS_DEC_LIST: %empty  */
-#line 116 "parser.yacc"
+#line 116 "./src/parser.yacc"
         {
 		(yyval.classdeclist) = NULL;
 	}
-#line 1573 "y.tab.c"
+#line 1419 "src/y.tab.c"
     break;
 
   case 8: /* VAR: TYPE IDENTIFIER ';'  */
-#line 122 "parser.yacc"
+#line 122 "./src/parser.yacc"
         {
 		(yyval.var) = A_VarDecl((yyvsp[-2].type)->pos, (yyvsp[-2].type), (yyvsp[-1].id), NULL);
 	}
-#line 1581 "y.tab.c"
+#line 1427 "src/y.tab.c"
     break;
 
   case 9: /* VAR: TYPE IDENTIFIER '=' IntConst ';'  */
-#line 127 "parser.yacc"
+#line 127 "./src/parser.yacc"
         {
 		(yyval.var) = A_VarDecl((yyvsp[-4].type)->pos, (yyvsp[-4].type), (yyvsp[-3].id), A_ExpList((yyvsp[-1].exp), NULL));
 	}
-#line 1589 "y.tab.c"
+#line 1435 "src/y.tab.c"
     break;
 
   case 10: /* VAR: TYPE IDENTIFIER '=' BRACE INT_CONST_LIST '}' ';'  */
-#line 132 "parser.yacc"
+#line 132 "./src/parser.yacc"
         {
 		(yyval.var) = A_VarDecl((yyvsp[-6].type)->pos, (yyvsp[-6].type), (yyvsp[-5].id), (yyvsp[-2].explist));
 	}
-#line 1597 "y.tab.c"
+#line 1443 "src/y.tab.c"
     break;
 
   case 11: /* VAR_LIST: VAR VAR_LIST  */
-#line 138 "parser.yacc"
+#line 138 "./src/parser.yacc"
         {
 		(yyval.varlist) = A_VarDeclList((yyvsp[-1].var), (yyvsp[0].varlist));
 	}
-#line 1605 "y.tab.c"
+#line 1451 "src/y.tab.c"
     break;
 
   case 12: /* VAR_LIST: %empty  */
-#line 142 "parser.yacc"
+#line 142 "./src/parser.yacc"
         {
 		(yyval.varlist) = NULL;
 	}
-#line 1613 "y.tab.c"
+#line 1459 "src/y.tab.c"
     break;
 
   case 13: /* IntConst: INT_CONST  */
-#line 148 "parser.yacc"
+#line 148 "./src/parser.yacc"
         {
 		(yyval.exp) = (yyvsp[0].exp);
 	}
-#line 1621 "y.tab.c"
+#line 1467 "src/y.tab.c"
     break;
 
   case 14: /* IntConst: OP_MINUS INT_CONST  */
-#line 153 "parser.yacc"
+#line 153 "./src/parser.yacc"
         {
 		(yyval.exp) = A_NumConst(A_Pos((yyvsp[0].exp)->pos->line, (yyvsp[0].exp)->pos->pos - 1), -(yyvsp[0].exp)->u.num);
 	}
-#line 1629 "y.tab.c"
+#line 1475 "src/y.tab.c"
     break;
 
   case 15: /* INT_CONST_LIST: IntConst INT_CONST_REST  */
-#line 159 "parser.yacc"
+#line 159 "./src/parser.yacc"
         {
 		(yyval.explist) = A_ExpList((yyvsp[-1].exp), (yyvsp[0].explist));
 	}
-#line 1637 "y.tab.c"
+#line 1483 "src/y.tab.c"
     break;
 
   case 16: /* INT_CONST_LIST: %empty  */
-#line 163 "parser.yacc"
+#line 163 "./src/parser.yacc"
         {
 		(yyval.explist) = NULL;
 	}
-#line 1645 "y.tab.c"
+#line 1491 "src/y.tab.c"
     break;
 
   case 17: /* INT_CONST_REST: ',' IntConst INT_CONST_REST  */
-#line 169 "parser.yacc"
+#line 169 "./src/parser.yacc"
         {
 		(yyval.explist) = A_ExpList((yyvsp[-1].exp), (yyvsp[0].explist));
 	}
-#line 1653 "y.tab.c"
+#line 1499 "src/y.tab.c"
     break;
 
   case 18: /* INT_CONST_REST: %empty  */
-#line 173 "parser.yacc"
+#line 173 "./src/parser.yacc"
         {
 		(yyval.explist) = NULL;
 	}
-#line 1661 "y.tab.c"
+#line 1507 "src/y.tab.c"
     break;
 
   case 19: /* METHOD: PUBLIC TYPE IDENTIFIER PARENTHESIS FORMAL_LIST ')' BRACE VAR_LIST STM_LIST '}'  */
-#line 179 "parser.yacc"
+#line 179 "./src/parser.yacc"
         {
 		(yyval.method) = A_MethodDecl((yyvsp[-9].token), (yyvsp[-8].type), (yyvsp[-7].id), (yyvsp[-5].formallist), (yyvsp[-2].varlist), (yyvsp[-1].stmlist));
 	}
-#line 1669 "y.tab.c"
+#line 1515 "src/y.tab.c"
     break;
 
   case 20: /* METHOD_LIST: METHOD METHOD_LIST  */
-#line 185 "parser.yacc"
+#line 185 "./src/parser.yacc"
         {
 		(yyval.methodlist) = A_MethodDeclList((yyvsp[-1].method), (yyvsp[0].methodlist));
 	}
-#line 1677 "y.tab.c"
+#line 1523 "src/y.tab.c"
     break;
 
   case 21: /* METHOD_LIST: %empty  */
-#line 189 "parser.yacc"
+#line 189 "./src/parser.yacc"
         {
 		(yyval.methodlist) = NULL;
 	}
-#line 1685 "y.tab.c"
+#line 1531 "src/y.tab.c"
     break;
 
   case 22: /* FORMAL_LIST: TYPE IDENTIFIER FORMAL_REST  */
-#line 195 "parser.yacc"
+#line 195 "./src/parser.yacc"
         {
 		(yyval.formallist) = A_FormalList(A_Formal((yyvsp[-2].type)->pos, (yyvsp[-2].type), (yyvsp[-1].id)), (yyvsp[0].formallist));
 	}
-#line 1693 "y.tab.c"
+#line 1539 "src/y.tab.c"
     break;
 
   case 23: /* FORMAL_LIST: %empty  */
-#line 199 "parser.yacc"
+#line 199 "./src/parser.yacc"
         {
 		(yyval.formallist) = NULL;
 	}
-#line 1701 "y.tab.c"
+#line 1547 "src/y.tab.c"
     break;
 
   case 24: /* FORMAL_REST: ',' TYPE IDENTIFIER FORMAL_REST  */
-#line 205 "parser.yacc"
+#line 205 "./src/parser.yacc"
         {
 		(yyval.formallist) = A_FormalList(A_Formal((yyvsp[-2].type)->pos, (yyvsp[-2].type), (yyvsp[-1].id)), (yyvsp[0].formallist));
 	}
-#line 1709 "y.tab.c"
+#line 1555 "src/y.tab.c"
     break;
 
   case 25: /* FORMAL_REST: %empty  */
-#line 209 "parser.yacc"
+#line 209 "./src/parser.yacc"
         {
 		(yyval.formallist) = NULL;
 	}
-#line 1717 "y.tab.c"
+#line 1563 "src/y.tab.c"
     break;
 
   case 26: /* TYPE: CLASS IDENTIFIER  */
-#line 215 "parser.yacc"
+#line 215 "./src/parser.yacc"
         {
 		(yyval.type) = A_Type((yyvsp[-1].token), A_idType, (yyvsp[0].id));
 	}
-#line 1725 "y.tab.c"
+#line 1571 "src/y.tab.c"
     break;
 
   case 27: /* TYPE: INT  */
-#line 220 "parser.yacc"
+#line 220 "./src/parser.yacc"
         {
 		(yyval.type) = A_Type((yyvsp[0].token), A_intType, NULL);
 	}
-#line 1733 "y.tab.c"
+#line 1579 "src/y.tab.c"
     break;
 
   case 28: /* TYPE: INT BRACKET ']'  */
-#line 225 "parser.yacc"
+#line 225 "./src/parser.yacc"
         {
 		(yyval.type) = A_Type((yyvsp[-2].token), A_intArrType, NULL);
 	}
-#line 1741 "y.tab.c"
+#line 1587 "src/y.tab.c"
     break;
 
   case 29: /* STM: BRACE STM_LIST '}'  */
-#line 231 "parser.yacc"
+#line 231 "./src/parser.yacc"
         {
 		(yyval.stm) = A_NestedStm((yyvsp[-2].token), (yyvsp[-1].stmlist));
 	}
-#line 1749 "y.tab.c"
+#line 1595 "src/y.tab.c"
     break;
 
   case 30: /* STM: IF PARENTHESIS EXP ')' STM ELSE STM  */
-#line 236 "parser.yacc"
+#line 236 "./src/parser.yacc"
         {
 		(yyval.stm) = A_IfStm((yyvsp[-6].token), (yyvsp[-4].exp), (yyvsp[-2].stm), (yyvsp[0].stm));
 	}
-#line 1757 "y.tab.c"
+#line 1603 "src/y.tab.c"
     break;
 
   case 31: /* STM: IF PARENTHESIS EXP ')' STM  */
-#line 241 "parser.yacc"
+#line 241 "./src/parser.yacc"
         {
 		(yyval.stm) = A_IfStm((yyvsp[-4].token), (yyvsp[-2].exp), (yyvsp[0].stm), NULL);
 	}
-#line 1765 "y.tab.c"
+#line 1611 "src/y.tab.c"
     break;
 
   case 32: /* STM: WHILE PARENTHESIS EXP ')' STM  */
-#line 246 "parser.yacc"
+#line 246 "./src/parser.yacc"
         {
 		(yyval.stm) = A_WhileStm((yyvsp[-4].token), (yyvsp[-2].exp), (yyvsp[0].stm));
 	}
-#line 1773 "y.tab.c"
+#line 1619 "src/y.tab.c"
     break;
 
   case 33: /* STM: WHILE PARENTHESIS EXP ')' ';'  */
-#line 251 "parser.yacc"
+#line 251 "./src/parser.yacc"
         {
 		(yyval.stm) = A_WhileStm((yyvsp[-4].token), (yyvsp[-2].exp), NULL);
 	}
-#line 1781 "y.tab.c"
+#line 1627 "src/y.tab.c"
     break;
 
   case 34: /* STM: EXP '=' EXP ';'  */
-#line 256 "parser.yacc"
+#line 256 "./src/parser.yacc"
         {
 		(yyval.stm) = A_AssignStm((yyvsp[-3].exp)->pos, (yyvsp[-3].exp), (yyvsp[-1].exp));
 	}
-#line 1789 "y.tab.c"
+#line 1635 "src/y.tab.c"
     break;
 
   case 35: /* STM: EXP BRACKET ']' '=' BRACE EXP_LIST '}' ';'  */
-#line 261 "parser.yacc"
+#line 261 "./src/parser.yacc"
         {
 		(yyval.stm) = A_ArrayInit((yyvsp[-7].exp)->pos, (yyvsp[-7].exp), (yyvsp[-2].explist));
 	}
-#line 1797 "y.tab.c"
+#line 1643 "src/y.tab.c"
     break;
 
   case 36: /* STM: EXP '.' IDENTIFIER PARENTHESIS EXP_LIST ')' ';'  */
-#line 266 "parser.yacc"
+#line 266 "./src/parser.yacc"
         {
 		(yyval.stm) = A_CallStm((yyvsp[-6].exp)->pos, (yyvsp[-6].exp), (yyvsp[-4].id), (yyvsp[-2].explist));
 	}
-#line 1805 "y.tab.c"
+#line 1651 "src/y.tab.c"
     break;
 
   case 37: /* STM: CONTINUE ';'  */
-#line 271 "parser.yacc"
+#line 271 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Continue((yyvsp[-1].token));
 	}
-#line 1813 "y.tab.c"
+#line 1659 "src/y.tab.c"
     break;
 
   case 38: /* STM: BREAK ';'  */
-#line 276 "parser.yacc"
+#line 276 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Break((yyvsp[-1].token));
 	}
-#line 1821 "y.tab.c"
+#line 1667 "src/y.tab.c"
     break;
 
   case 39: /* STM: RETURN EXP ';'  */
-#line 281 "parser.yacc"
+#line 281 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Return((yyvsp[-2].token), (yyvsp[-1].exp));
 	}
-#line 1829 "y.tab.c"
+#line 1675 "src/y.tab.c"
     break;
 
   case 40: /* STM: PUTINT PARENTHESIS EXP ')' ';'  */
-#line 286 "parser.yacc"
+#line 286 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Putint((yyvsp[-4].token), (yyvsp[-2].exp));
 	}
-#line 1837 "y.tab.c"
+#line 1683 "src/y.tab.c"
     break;
 
   case 41: /* STM: PUTCH PARENTHESIS EXP ')' ';'  */
-#line 291 "parser.yacc"
+#line 291 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Putch((yyvsp[-4].token), (yyvsp[-2].exp));
 	}
-#line 1845 "y.tab.c"
+#line 1691 "src/y.tab.c"
     break;
 
   case 42: /* STM: PUTARRAY PARENTHESIS EXP ',' EXP ')' ';'  */
-#line 296 "parser.yacc"
+#line 296 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Putarray((yyvsp[-6].token), (yyvsp[-4].exp), (yyvsp[-2].exp));
 	}
-#line 1853 "y.tab.c"
+#line 1699 "src/y.tab.c"
     break;
 
   case 43: /* STM: STARTTIME PARENTHESIS ')' ';'  */
-#line 301 "parser.yacc"
+#line 301 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Starttime((yyvsp[-3].token));
 	}
-#line 1861 "y.tab.c"
+#line 1707 "src/y.tab.c"
     break;
 
   case 44: /* STM: STOPTIME PARENTHESIS ')' ';'  */
-#line 306 "parser.yacc"
+#line 306 "./src/parser.yacc"
         {
 		(yyval.stm) = A_Stoptime((yyvsp[-3].token));
 	}
-#line 1869 "y.tab.c"
+#line 1715 "src/y.tab.c"
     break;
 
   case 45: /* STM_LIST: STM STM_LIST  */
-#line 312 "parser.yacc"
+#line 312 "./src/parser.yacc"
         {
 		(yyval.stmlist) = A_StmList((yyvsp[-1].stm), (yyvsp[0].stmlist));
 	}
-#line 1877 "y.tab.c"
+#line 1723 "src/y.tab.c"
     break;
 
   case 46: /* STM_LIST: %empty  */
-#line 316 "parser.yacc"
+#line 316 "./src/parser.yacc"
         {
 		(yyval.stmlist) = NULL;
 	}
-#line 1885 "y.tab.c"
+#line 1731 "src/y.tab.c"
     break;
 
   case 47: /* EXP: EXP OP_PLUS EXP  */
-#line 322 "parser.yacc"
+#line 322 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_plus, (yyvsp[0].exp));
 	}
-#line 1893 "y.tab.c"
+#line 1739 "src/y.tab.c"
     break;
 
   case 48: /* EXP: EXP OP_MINUS EXP  */
-#line 327 "parser.yacc"
+#line 327 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_minus, (yyvsp[0].exp));
 	}
-#line 1901 "y.tab.c"
+#line 1747 "src/y.tab.c"
     break;
 
   case 49: /* EXP: EXP OP_MULTIPLY EXP  */
-#line 332 "parser.yacc"
+#line 332 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_times, (yyvsp[0].exp));
 	}
-#line 1909 "y.tab.c"
+#line 1755 "src/y.tab.c"
     break;
 
   case 50: /* EXP: EXP OP_DIV EXP  */
-#line 337 "parser.yacc"
+#line 337 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_div, (yyvsp[0].exp));
 	}
-#line 1917 "y.tab.c"
+#line 1763 "src/y.tab.c"
     break;
 
   case 51: /* EXP: EXP AND EXP  */
-#line 342 "parser.yacc"
+#line 342 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_and, (yyvsp[0].exp));
 	}
-#line 1925 "y.tab.c"
+#line 1771 "src/y.tab.c"
     break;
 
   case 52: /* EXP: EXP OR EXP  */
-#line 347 "parser.yacc"
+#line 347 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_or, (yyvsp[0].exp));
 	}
-#line 1933 "y.tab.c"
+#line 1779 "src/y.tab.c"
     break;
 
   case 53: /* EXP: EXP LESS EXP  */
-#line 352 "parser.yacc"
+#line 352 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_less, (yyvsp[0].exp));
 	}
-#line 1941 "y.tab.c"
+#line 1787 "src/y.tab.c"
     break;
 
   case 54: /* EXP: EXP LE EXP  */
-#line 357 "parser.yacc"
+#line 357 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_le, (yyvsp[0].exp));
 	}
-#line 1949 "y.tab.c"
+#line 1795 "src/y.tab.c"
     break;
 
   case 55: /* EXP: EXP GREATER EXP  */
-#line 362 "parser.yacc"
+#line 362 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_greater, (yyvsp[0].exp));
 	}
-#line 1957 "y.tab.c"
+#line 1803 "src/y.tab.c"
     break;
 
   case 56: /* EXP: EXP GE EXP  */
-#line 367 "parser.yacc"
+#line 367 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_ge, (yyvsp[0].exp));
 	}
-#line 1965 "y.tab.c"
+#line 1811 "src/y.tab.c"
     break;
 
   case 57: /* EXP: EXP EQ EXP  */
-#line 372 "parser.yacc"
+#line 372 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_eq, (yyvsp[0].exp));
 	}
-#line 1973 "y.tab.c"
+#line 1819 "src/y.tab.c"
     break;
 
   case 58: /* EXP: EXP NEQ EXP  */
-#line 377 "parser.yacc"
+#line 377 "./src/parser.yacc"
         {
 		(yyval.exp) = A_OpExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), A_ne, (yyvsp[0].exp));
 	}
-#line 1981 "y.tab.c"
+#line 1827 "src/y.tab.c"
     break;
 
   case 59: /* EXP: EXP BRACKET EXP ']'  */
-#line 382 "parser.yacc"
+#line 382 "./src/parser.yacc"
         {
 		(yyval.exp) = A_ArrayExp((yyvsp[-3].exp)->pos, (yyvsp[-3].exp), (yyvsp[-1].exp));
 	}
-#line 1989 "y.tab.c"
+#line 1835 "src/y.tab.c"
     break;
 
   case 60: /* EXP: EXP '.' IDENTIFIER PARENTHESIS EXP_LIST ')'  */
-#line 387 "parser.yacc"
+#line 387 "./src/parser.yacc"
         {
 		(yyval.exp) = A_CallExp((yyvsp[-5].exp)->pos, (yyvsp[-5].exp), (yyvsp[-3].id), (yyvsp[-1].explist));
 	}
-#line 1997 "y.tab.c"
+#line 1843 "src/y.tab.c"
     break;
 
   case 61: /* EXP: EXP '.' IDENTIFIER  */
-#line 392 "parser.yacc"
+#line 392 "./src/parser.yacc"
         {
 		(yyval.exp) = A_ClassVarExp((yyvsp[-2].exp)->pos, (yyvsp[-2].exp), (yyvsp[0].id));
 	}
-#line 2005 "y.tab.c"
+#line 1851 "src/y.tab.c"
     break;
 
   case 62: /* EXP: INT_CONST  */
-#line 397 "parser.yacc"
+#line 397 "./src/parser.yacc"
         {
 		(yyval.exp) = (yyvsp[0].exp);
 	}
-#line 2013 "y.tab.c"
+#line 1859 "src/y.tab.c"
     break;
 
   case 63: /* EXP: True  */
-#line 402 "parser.yacc"
+#line 402 "./src/parser.yacc"
         {
 		(yyval.exp) = A_BoolConst((yyvsp[0].token), TRUE);
 	}
-#line 2021 "y.tab.c"
+#line 1867 "src/y.tab.c"
     break;
 
   case 64: /* EXP: False  */
-#line 407 "parser.yacc"
+#line 407 "./src/parser.yacc"
         {
 		(yyval.exp) = A_BoolConst((yyvsp[0].token), FALSE);
 	}
-#line 2029 "y.tab.c"
+#line 1875 "src/y.tab.c"
     break;
 
   case 65: /* EXP: LENGTH PARENTHESIS EXP ')'  */
-#line 412 "parser.yacc"
+#line 412 "./src/parser.yacc"
         {
 		(yyval.exp) = A_LengthExp((yyvsp[-3].token), (yyvsp[-1].exp));
 	}
-#line 2037 "y.tab.c"
+#line 1883 "src/y.tab.c"
     break;
 
   case 66: /* EXP: IDENTIFIER  */
-#line 417 "parser.yacc"
+#line 417 "./src/parser.yacc"
         {
 		(yyval.exp) = A_IdExp(A_Pos(line, pos - strlen((yyvsp[0].id))), (yyvsp[0].id));
 	}
-#line 2045 "y.tab.c"
+#line 1891 "src/y.tab.c"
     break;
 
   case 67: /* EXP: THIS  */
-#line 422 "parser.yacc"
+#line 422 "./src/parser.yacc"
         {
 		(yyval.exp) = A_ThisExp((yyvsp[0].token));
 	}
-#line 2053 "y.tab.c"
+#line 1899 "src/y.tab.c"
     break;
 
   case 68: /* EXP: NEW INT BRACKET EXP ']'  */
-#line 427 "parser.yacc"
+#line 427 "./src/parser.yacc"
         {
 		(yyval.exp) = A_NewIntArrExp((yyvsp[-4].token), (yyvsp[-1].exp));
 	}
-#line 2061 "y.tab.c"
+#line 1907 "src/y.tab.c"
     break;
 
   case 69: /* EXP: NEW IDENTIFIER PARENTHESIS ')'  */
-#line 432 "parser.yacc"
+#line 432 "./src/parser.yacc"
         {
 		(yyval.exp) = A_NewObjExp((yyvsp[-3].token), (yyvsp[-2].id));
 	}
-#line 2069 "y.tab.c"
+#line 1915 "src/y.tab.c"
     break;
 
   case 70: /* EXP: NOT EXP  */
-#line 437 "parser.yacc"
+#line 437 "./src/parser.yacc"
         {
 		(yyval.exp) = A_NotExp((yyvsp[-1].token), (yyvsp[0].exp));
 	}
-#line 2077 "y.tab.c"
+#line 1923 "src/y.tab.c"
     break;
 
   case 71: /* EXP: OP_MINUS EXP  */
-#line 442 "parser.yacc"
+#line 442 "./src/parser.yacc"
         {
 		(yyval.exp) = A_MinusExp((yyvsp[-1].token), (yyvsp[0].exp));
 	}
-#line 2085 "y.tab.c"
+#line 1931 "src/y.tab.c"
     break;
 
   case 72: /* EXP: PARENTHESIS EXP ')'  */
-#line 447 "parser.yacc"
+#line 447 "./src/parser.yacc"
         {
 		(yyval.exp) = A_EscExp((yyvsp[-2].token), NULL, (yyvsp[-1].exp));
 	}
-#line 2093 "y.tab.c"
+#line 1939 "src/y.tab.c"
     break;
 
   case 73: /* EXP: PARENTHESIS BRACE STM_LIST '}' EXP ')'  */
-#line 452 "parser.yacc"
+#line 452 "./src/parser.yacc"
         {
 		(yyval.exp) = A_EscExp((yyvsp[-5].token), (yyvsp[-3].stmlist), (yyvsp[-1].exp));
 	}
-#line 2101 "y.tab.c"
+#line 1947 "src/y.tab.c"
     break;
 
   case 74: /* EXP: GETINT PARENTHESIS ')'  */
-#line 457 "parser.yacc"
+#line 457 "./src/parser.yacc"
         {
 		(yyval.exp) = A_Getint((yyvsp[-2].token));
 	}
-#line 2109 "y.tab.c"
+#line 1955 "src/y.tab.c"
     break;
 
   case 75: /* EXP: GETCH PARENTHESIS ')'  */
-#line 462 "parser.yacc"
+#line 462 "./src/parser.yacc"
         {
 		(yyval.exp) = A_Getch((yyvsp[-2].token));
 	}
-#line 2117 "y.tab.c"
+#line 1963 "src/y.tab.c"
     break;
 
   case 76: /* EXP: GETARRAY PARENTHESIS EXP ')'  */
-#line 467 "parser.yacc"
+#line 467 "./src/parser.yacc"
         {
 		(yyval.exp) = A_Getarray((yyvsp[-3].token), (yyvsp[-1].exp));
 	}
-#line 2125 "y.tab.c"
+#line 1971 "src/y.tab.c"
     break;
 
   case 77: /* EXP_LIST: EXP EXP_REST  */
-#line 473 "parser.yacc"
+#line 473 "./src/parser.yacc"
         {
 		(yyval.explist) = A_ExpList((yyvsp[-1].exp), (yyvsp[0].explist));
 	}
-#line 2133 "y.tab.c"
+#line 1979 "src/y.tab.c"
     break;
 
   case 78: /* EXP_LIST: %empty  */
-#line 477 "parser.yacc"
+#line 477 "./src/parser.yacc"
         {
 		(yyval.explist) = NULL;
 	}
-#line 2141 "y.tab.c"
+#line 1987 "src/y.tab.c"
     break;
 
   case 79: /* EXP_REST: ',' EXP EXP_REST  */
-#line 483 "parser.yacc"
+#line 483 "./src/parser.yacc"
         {
 		(yyval.explist) = A_ExpList((yyvsp[-1].exp), (yyvsp[0].explist));
 	}
-#line 2149 "y.tab.c"
+#line 1995 "src/y.tab.c"
     break;
 
   case 80: /* EXP_REST: %empty  */
-#line 487 "parser.yacc"
+#line 487 "./src/parser.yacc"
         {
 		(yyval.explist) = NULL;
 	}
-#line 2157 "y.tab.c"
+#line 2003 "src/y.tab.c"
     break;
 
 
-#line 2161 "y.tab.c"
+#line 2007 "src/y.tab.c"
 
       default: break;
     }
@@ -2350,7 +2196,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 492 "parser.yacc"
+#line 492 "./src/parser.yacc"
 
 
 void yyerror(s)

@@ -1,5 +1,6 @@
+#line 1 "src/lex.yy.c"
 
-#line 2 "lex.yy.c"
+#line 3 "src/lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -538,8 +539,8 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "lexer.lex"
-#line 2 "lexer.lex"
+#line 1 "./src/lexer.lex"
+#line 2 "./src/lexer.lex"
 
 #include "util.h"
 #include "fdmjast.h"
@@ -550,9 +551,9 @@ int c;
 int line = 1;
 int pos = 1;
 
-#line 553 "lex.yy.c"
+#line 554 "src/lex.yy.c"
 
-#line 555 "lex.yy.c"
+#line 556 "src/lex.yy.c"
 
 #define INITIAL 0
 #define COMMENT1 1
@@ -771,10 +772,10 @@ YY_DECL
 		}
 
 	{
-#line 15 "lexer.lex"
+#line 15 "./src/lexer.lex"
 
 
-#line 777 "lex.yy.c"
+#line 778 "src/lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -833,255 +834,255 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 17 "lexer.lex"
+#line 17 "./src/lexer.lex"
 { BEGIN COMMENT1; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 18 "lexer.lex"
+#line 18 "./src/lexer.lex"
 { BEGIN COMMENT2; }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 19 "lexer.lex"
+#line 19 "./src/lexer.lex"
 { line++; pos = 1; BEGIN INITIAL; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 20 "lexer.lex"
+#line 20 "./src/lexer.lex"
 { pos += 4; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 21 "lexer.lex"
+#line 21 "./src/lexer.lex"
 { pos++; }
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 22 "lexer.lex"
+#line 22 "./src/lexer.lex"
 { line++; pos = 1;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 23 "lexer.lex"
+#line 23 "./src/lexer.lex"
 { pos += 4; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 24 "lexer.lex"
+#line 24 "./src/lexer.lex"
 { pos++; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 25 "lexer.lex"
+#line 25 "./src/lexer.lex"
 { pos++; BEGIN INITIAL; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 27 "lexer.lex"
+#line 27 "./src/lexer.lex"
 { pos++; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 28 "lexer.lex"
+#line 28 "./src/lexer.lex"
 { pos += 4; }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 29 "lexer.lex"
+#line 29 "./src/lexer.lex"
 { line++; pos = 1; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 31 "lexer.lex"
+#line 31 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return OP_PLUS; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 32 "lexer.lex"
+#line 32 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return OP_MULTIPLY; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 33 "lexer.lex"
+#line 33 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return OP_MINUS; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 34 "lexer.lex"
+#line 34 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return OP_DIV; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 35 "lexer.lex"
+#line 35 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return LE; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 36 "lexer.lex"
+#line 36 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return GE; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 37 "lexer.lex"
+#line 37 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return LESS; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 38 "lexer.lex"
+#line 38 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return GREATER; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 39 "lexer.lex"
+#line 39 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return EQ; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 40 "lexer.lex"
+#line 40 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return NEQ; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 41 "lexer.lex"
+#line 41 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return AND; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 42 "lexer.lex"
+#line 42 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return OR; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 43 "lexer.lex"
+#line 43 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return NOT; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 45 "lexer.lex"
+#line 45 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return PUBLIC; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 46 "lexer.lex"
+#line 46 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return INT; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 47 "lexer.lex"
+#line 47 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return MAIN; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 48 "lexer.lex"
+#line 48 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return CLASS; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 49 "lexer.lex"
+#line 49 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return EXTENDS; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 50 "lexer.lex"
+#line 50 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return IF; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 51 "lexer.lex"
+#line 51 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return ELSE; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 52 "lexer.lex"
+#line 52 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return WHILE; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 53 "lexer.lex"
+#line 53 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return CONTINUE; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 54 "lexer.lex"
+#line 54 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return BREAK; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 55 "lexer.lex"
+#line 55 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return RETURN; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 57 "lexer.lex"
+#line 57 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTINT; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 58 "lexer.lex"
+#line 58 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTCH; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 59 "lexer.lex"
+#line 59 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return PUTARRAY; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 60 "lexer.lex"
+#line 60 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return GETINT; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 61 "lexer.lex"
+#line 61 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return GETCH; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 62 "lexer.lex"
+#line 62 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return GETARRAY; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 63 "lexer.lex"
+#line 63 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return STARTTIME; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 64 "lexer.lex"
+#line 64 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return STOPTIME; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 66 "lexer.lex"
+#line 66 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return True; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 67 "lexer.lex"
+#line 67 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return False; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 68 "lexer.lex"
+#line 68 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return LENGTH; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 69 "lexer.lex"
+#line 69 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return THIS; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 70 "lexer.lex"
+#line 70 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos += yyleng; return NEW; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 72 "lexer.lex"
+#line 72 "./src/lexer.lex"
 {
     yylval.exp = A_NumConst(A_Pos(line, pos), calc(yytext, yyleng));
     pos += yyleng;
@@ -1090,7 +1091,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 78 "lexer.lex"
+#line 78 "./src/lexer.lex"
 {
     yylval.exp = A_NumConst(A_Pos(line, pos), 0);
     pos++;
@@ -1099,7 +1100,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 84 "lexer.lex"
+#line 84 "./src/lexer.lex"
 { 
     yylval.id = String(yytext);
     pos += yyleng;
@@ -1108,22 +1109,22 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 90 "lexer.lex"
+#line 90 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos++; return BRACE; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 91 "lexer.lex"
+#line 91 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos++; return BRACKET; }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 92 "lexer.lex"
+#line 92 "./src/lexer.lex"
 { yylval.token = A_Pos(line, pos); pos++; return PARENTHESIS; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 93 "lexer.lex"
+#line 93 "./src/lexer.lex"
 {
     pos++;
     c = yytext[0];
@@ -1132,7 +1133,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 99 "lexer.lex"
+#line 99 "./src/lexer.lex"
 {
     pos++;
     printf("Illegal input \"%c\" found at line = %d, pos = %d\n", yytext[0], line, pos);
@@ -1140,10 +1141,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 103 "lexer.lex"
+#line 103 "./src/lexer.lex"
 ECHO;
 	YY_BREAK
-#line 1146 "lex.yy.c"
+#line 1147 "src/lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT1):
 case YY_STATE_EOF(COMMENT2):
@@ -2150,7 +2151,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 103 "lexer.lex"
+#line 103 "./src/lexer.lex"
 
 
 

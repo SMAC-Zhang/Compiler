@@ -95,7 +95,7 @@ void G_rmEdge(G_node from, G_node to) {
  /**
   * Print a human-readable dump for debugging.
   */
-void G_show(FILE *out, G_nodeList p, void showInfo(void *)) {
+void G_show(FILE *out, G_nodeList p, void showInfo(FILE*, void *)) {
   for (; p!=NULL; p=p->tail) {
     G_node n = p->head;
     G_nodeList q;
@@ -104,7 +104,7 @@ void G_show(FILE *out, G_nodeList p, void showInfo(void *)) {
       continue;
     }
     if (showInfo) 
-      showInfo(n->info);
+      showInfo(out, n->info);
     fprintf(out, " (%d): ", n->mykey); 
     for(q=G_succ(n); q!=NULL; q=q->tail) 
            fprintf(out, "%d ", q->head->mykey);

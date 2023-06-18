@@ -87,14 +87,27 @@ static void format(char *result, string assem,
       switch(*(++p)) {
       case 's': {int n = atoi(++p);
 		 string s = Temp_look(m, nthTemp(src,n));
+#ifdef LLVM     
+     strcpy(result+i, "t");
+		 strcpy(result+i+1, s);
+		 i += (strlen(s)+1);
+#else
 		 strcpy(result+i, s);
 		 i += (strlen(s));
+#endif
 	       }
 	break;
       case 'd': {int n = atoi(++p);
 		 string s = Temp_look(m, nthTemp(dst,n));
+
+#ifdef LLVM
+     strcpy(result+i, "t");
+		 strcpy(result+i+1, s);
+		 i += (strlen(s)+1);
+#else
 		 strcpy(result+i, s);
 		 i += (strlen(s));
+#endif
 	       }
 	break;
       case 'j': assert(jumps); 
