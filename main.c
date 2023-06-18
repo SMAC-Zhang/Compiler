@@ -59,7 +59,7 @@ void print_declare(FILE* out) {
 	fprintf(out, "declare ptr @malloc(i64)\n");
 	fprintf(out, "declare ptr @putarray(i64)\n");
 	fprintf(out, "declare ptr @putint(i64)\n");
-	fprintf(out, "declare ptr @putchar(i64)\n");
+	fprintf(out, "declare ptr @putch(i64)\n");
 	fprintf(out, "declare ptr @getarray()\n");
 	fprintf(out, "declare ptr @getch()\n");
 	fprintf(out, "declare ptr @getint()\n");

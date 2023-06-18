@@ -87,13 +87,18 @@ static Temp_tempList munch_args(int n, T_expList el, string s, bool first) {
 
 // only malloc
 static void munch_extcall(Temp_temp ret, T_exp e) {
-    Temp_temp r1 = Temp_newtemp();
     char args[1024] = {'\0'};
     Temp_tempList tl = munch_args(0, e->u.ExtCALL.args, args, TRUE);
-    emit(AS_Oper(String_format("%%`d0 = call ptr @%s(%s)", e->u.ExtCALL.extfun, String(args)), 
+    if (strcmp("malloc", e->u.ExtCALL.extfun) == 0) {
+        Temp_temp r1 = Temp_newtemp();
+        emit(AS_Oper(String_format("%%`d0 = call ptr @%s(%s)", e->u.ExtCALL.extfun, String(args)), 
         Temp_TempList(r1, NULL), tl, NULL));
-    emit(AS_Oper(String_format("%%`d0 = ptrtoint ptr %%`s0 to i64"),
+        emit(AS_Oper(String_format("%%`d0 = ptrtoint ptr %%`s0 to i64"),
         Temp_TempList(ret, NULL), Temp_TempList(r1, NULL), NULL));
+    } else {
+        emit(AS_Oper(String_format("%%`d0 = call i64 @%s(%s)", e->u.ExtCALL.extfun, String(args)), 
+        Temp_TempList(ret, NULL), tl, NULL));
+    }
 }
 
 static void munch_call(Temp_temp ret, T_exp e) {

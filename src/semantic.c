@@ -576,6 +576,8 @@ void check_AssignStm(FILE* out, methodEntry me, A_stm s) {
         fprintf(out, "line %d:%d: a class '%s' type is expected on the right of AssignStm\n", s->u.assign.value->pos->line, s->u.assign.value->pos->pos, arr->id);
         return;
     }
+    arr->id = value->id;
+    arr->kind = value->kind;
 }
 
 void check_ArrayInit(FILE* out, methodEntry me, A_stm s) {

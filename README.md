@@ -11,6 +11,8 @@
 
 使用`make LLVM`命令生成LLVM编译器<br>
 使用`./LLVM xx.fmj` 命令生成`xx.ll`文件。<br>
+使用`make lib.ll`命令生成`lib.ll`文件。<br>
+使用`llvm-link xx.ll lib.ll -S -o xx.out`命令生成最终代码<br>
 使用`lli xx.out`命令运行代码<br>
 
 ## 中间文件

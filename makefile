@@ -12,10 +12,11 @@ $(TESTCASE_DIR)/%.s: $(TESTCASE_DIR)/%.fmj RPI
 	@arm-linux-gnueabihf-gcc -mcpu=cortex-a72 $(TESTCASE_DIR)/$*.s $(TESTCASE_DIR)/libsysy.a --static -o $(TESTCASE_DIR)/$*.out 
 	@qemu-arm -B 0x1000 $(TESTCASE_DIR)/$*.out; echo $$?
 
-$(TESTCASE_DIR)/%.ll: $(TESTCASE_DIR)/%.fmj LLVM
+$(TESTCASE_DIR)/%.ll: $(TESTCASE_DIR)/%.fmj LLVM lib.ll
 	@echo TEST $*
 	@./LLVM $<
-	@lli $(TESTCASE_DIR)/$*.ll; echo $$?
+	@llvm-link $(TESTCASE_DIR)/$*.ll lib.ll -S -o $(TESTCASE_DIR)/$*.out
+	@lli $(TESTCASE_DIR)/$*.out; echo $$?
 
 OBJ = $(SRC_DIR)/assem.o $(SRC_DIR)/assemblock.o $(SRC_DIR)/bg.o $(SRC_DIR)/canon.o $(SRC_DIR)/fdmjast.o \
 		  $(SRC_DIR)/flowgraph.o $(SRC_DIR)/graph.o $(SRC_DIR)/ig.o $(SRC_DIR)/liveness.o $(SRC_DIR)/pr_linearized.o \
@@ -39,6 +40,8 @@ LLVM: $(LLVM_OBJ) $(OBJ) main.c
 	@cc -g $(LLVM_OBJ) $(OBJ) main.o -o $@
 	@rm -f $(LLVM_OBJ) $(OBJ) main.o
 
+lib.ll: $(SRC_DIR)/libsysy.c $(INCLUDE_DIR)/libsysy.h
+	@clang -S -emit-llvm $(SRC_DIR)/libsysy.c -I$(INCLUDE_DIR) -o lib.ll -O0
 
 $(SRC_DIR)/y.tab.o: $(SRC_DIR)/y.tab.c $(SRC_DIR)/y.tab.h
 	@cc -g -c $< -I$(INCLUDE_DIR) -o $@

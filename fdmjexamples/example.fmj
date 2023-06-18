@@ -27,7 +27,7 @@ public class c1 {
 }
 
 public class c2 extends c1 {
-    int i1=3;
+    int i2=3;
     public int m1(int x) {
         return this.i1+x;
     }
