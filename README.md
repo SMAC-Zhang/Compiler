@@ -1,3 +1,6 @@
+# Compiler [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SMAC-Zhang/Compiler/blob/main/LICENSE) 
+一个简单的编译器，能将fdmj语言编译成llvm ir或者RPI(树莓派) arm
+
 # 运行方法
 
 ## RPI
